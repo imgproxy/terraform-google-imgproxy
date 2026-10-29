@@ -1,10 +1,5 @@
-provider "google" {
-  project = var.project_id
-  region  = var.location
-}
-
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-google"
+  source = "../.."
 
   project_id   = var.project_id
   location     = var.location

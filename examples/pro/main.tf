@@ -1,0 +1,51 @@
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+}
+
+resource "google_storage_bucket" "source" {
+  name                        = "${var.project_id}-imgproxy-source"
+  location                    = "us-central1"
+  uniform_bucket_level_access = true
+}
+
+resource "google_storage_bucket" "cache" {
+  name                        = "${var.project_id}-imgproxy-cache"
+  location                    = "us-central1"
+  uniform_bucket_level_access = true
+}
+
+module "imgproxy" {
+  source = "../.."
+
+  project_id   = var.project_id
+  service_name = "imgproxy-pro"
+
+  pro = true
+  pro_registry_password_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-pro-password"
+  }
+  pro_license_key_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-pro-license"
+  }
+
+  keys_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-keys"
+  }
+  salts_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-salts"
+  }
+
+  # Source images and processed-result cache (Pro)
+  source_buckets = [google_storage_bucket.source.name]
+  cache_bucket   = google_storage_bucket.cache.name
+
+  environment = {
+    IMGPROXY_CACHE_USE    = "gcs"
+    IMGPROXY_CACHE_BUCKET = google_storage_bucket.cache.name
+  }
+}
+
+output "url" {
+  value = module.imgproxy.url
+}

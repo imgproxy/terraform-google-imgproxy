@@ -1,0 +1,38 @@
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+}
+
+module "imgproxy" {
+  source = "../.."
+
+  project_id   = var.project_id
+  service_name = "imgproxy"
+
+  keys_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-keys"
+  }
+  salts_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-salts"
+  }
+
+  enable_cdn  = true
+  cdn_domains = ["cdn.example.com"] # Domain for the managed SSL certificate
+
+  cdn_cache_mode  = "CACHE_ALL_STATIC"
+  cdn_default_ttl = 3600
+  cdn_max_ttl     = 86400
+  cdn_client_ttl  = 3600
+
+  cdn_redirect_http_to_https = true
+}
+
+output "cdn_ip" {
+  value       = module.imgproxy.cdn_ip_address
+  description = "Point your DNS A record to this IP"
+}
+
+output "cert_status" {
+  value       = module.imgproxy.cdn_managed_certificate_id
+  description = "SSL certificate ID, check its status in Cloud Console"
+}

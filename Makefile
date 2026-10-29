@@ -1,4 +1,4 @@
-.PHONY: fmt validate test
+.PHONY: fmt validate test docs
 
 fmt:
 	terraform fmt -recursive
@@ -8,3 +8,6 @@ validate:
 
 test: validate
 	terraform test
+
+docs:
+	terraform-docs .

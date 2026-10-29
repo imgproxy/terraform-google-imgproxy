@@ -1,8 +1,3 @@
-provider "google" {
-  project = var.project_id
-  region  = var.location
-}
-
 resource "google_storage_bucket" "source" {
   for_each                    = toset(var.source_buckets)
   name                        = each.value
@@ -18,7 +13,7 @@ resource "google_storage_bucket" "cache" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-google"
+  source = "../.."
 
   project_id   = var.project_id
   location     = var.location
@@ -49,7 +44,7 @@ module "imgproxy" {
   cache_bucket   = try(google_storage_bucket.cache[0].name, null)
 
   # Monitoring
-  enable_monitoring    = var.enable_monitoring
+  enable_monitoring     = var.enable_monitoring
   otel_collector_config = var.otel_collector_config
 
   # Compute resources

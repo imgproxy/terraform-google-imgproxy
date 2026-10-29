@@ -9,7 +9,7 @@ locals {
 }
 
 module "imgproxy_common" {
-  source = "github.com/imgproxy/terraform-common//imgproxy-common?ref=486e02b07505f547e546f219bb46dbaf1b7ebbf4"
+  source = "./modules/imgproxy-common"
 
   # Image config
   tag                    = var.tag

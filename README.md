@@ -95,6 +95,10 @@ With `enable_cdn = true`, direct access to the Cloud Run URL is blocked automati
 
 The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud Run → service → Logs.
 
+### Vendored module
+
+`modules/imgproxy-common` is a generated copy of the module of the same name in `imgproxy/terraform-common`. Do not edit it here: change it upstream and run `sync.sh` from that repository.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -114,7 +118,7 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
-| imgproxy\_common | github.com/imgproxy/terraform-common//imgproxy-common | 486e02b07505f547e546f219bb46dbaf1b7ebbf4 |
+| imgproxy\_common | ./modules/imgproxy-common | n/a |
 
 ## Resources
 

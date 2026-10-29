@@ -1,9 +1,9 @@
 output "url" {
-  description = "The imgproxy endpoint URL. When enable_cdn = true and cdn_domains is set, returns the first domain as HTTPS. When only cdn_ssl_certificates is provided, returns the static IP URL. Otherwise returns the Cloud Run service URL."
+  description = "The imgproxy endpoint URL. When enable_cdn = true and cdn_domains is set, returns the first domain as HTTPS. When only cdn_ssl_certificates is provided, returns the static IP as HTTPS. With enable_cdn = true and no certificate, returns the static IP as HTTP. Otherwise returns the Cloud Run service URL."
   value = var.enable_cdn ? (
     length(var.cdn_domains) > 0
     ? "https://${var.cdn_domains[0]}"
-    : "https://${google_compute_global_address.cdn[0].address}"
+    : "${local.cdn_https ? "https" : "http"}://${google_compute_global_address.cdn[0].address}"
   ) : google_cloud_run_v2_service.main.uri
 }
 

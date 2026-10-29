@@ -250,3 +250,25 @@ run "timeout_null_uses_cdn_default" {
     error_message = "CDN backend timeout_sec must default to 30 when timeout is null"
   }
 }
+
+run "cdn_http_only_without_cert" {
+  command = plan
+
+  variables {
+    enable_cdn                 = true
+    cdn_redirect_http_to_https = false
+  }
+
+  # The warning check fires by design when no certificate is configured
+  expect_failures = [check.cdn_without_certificate]
+
+  assert {
+    condition     = length(google_compute_target_https_proxy.cdn) == 0 && length(google_compute_global_forwarding_rule.cdn) == 0
+    error_message = "HTTPS proxy and forwarding rule must not be created without a certificate"
+  }
+
+  assert {
+    condition     = length(google_compute_global_forwarding_rule.cdn_http) == 1
+    error_message = "HTTP forwarding rule must be created"
+  }
+}

@@ -107,14 +107,14 @@ run "rejects_cdn_with_secret_secret_id" {
   expect_failures = [google_cloud_run_v2_service.main]
 }
 
-run "rejects_cdn_without_cert" {
+run "rejects_cdn_without_cert_with_https_redirect" {
   command = plan
 
   variables {
     enable_cdn = true
   }
 
-  expect_failures = [google_cloud_run_v2_service.main]
+  expect_failures = [google_cloud_run_v2_service.main, check.cdn_without_certificate]
 }
 
 run "rejects_cdn_with_both_cert_types" {

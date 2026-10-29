@@ -59,6 +59,9 @@ locals {
   # inside the upstream module.
   service_account_email = var.service_account != null ? var.service_account : "${var.service_name}-sa@${var.project_id}.iam.gserviceaccount.com"
 
+  # HTTPS is only set up when a certificate is provided; otherwise the CDN is HTTP-only (testing).
+  cdn_https = length(var.cdn_domains) > 0 || length(var.cdn_ssl_certificates) > 0
+
   cdn_ssl_certs = var.enable_cdn ? (
     length(var.cdn_domains) > 0 ? [google_compute_managed_ssl_certificate.cdn[0].id] :
     [for cert in var.cdn_ssl_certificates : cert]
@@ -376,8 +379,8 @@ resource "google_cloud_run_v2_service" "main" {
     }
 
     precondition {
-      condition     = !var.enable_cdn || length(var.cdn_domains) > 0 || length(var.cdn_ssl_certificates) > 0
-      error_message = "When enable_cdn = true, either cdn_domains or cdn_ssl_certificates must be provided."
+      condition     = !var.enable_cdn || local.cdn_https || !var.cdn_redirect_http_to_https
+      error_message = "When enable_cdn = true without cdn_domains or cdn_ssl_certificates, the CDN serves plain HTTP only: set cdn_redirect_http_to_https = false."
     }
 
     precondition {
@@ -589,6 +592,13 @@ resource "google_compute_backend_service" "cdn" {
   depends_on = [google_project_service.apis]
 }
 
+check "cdn_without_certificate" {
+  assert {
+    condition     = !var.enable_cdn || local.cdn_https
+    error_message = "WARNING: enable_cdn = true without cdn_domains or cdn_ssl_certificates. The CDN serves plain HTTP only, so traffic (including signed URLs) is unencrypted. Use this for testing only."
+  }
+}
+
 resource "google_compute_managed_ssl_certificate" "cdn" {
   count   = var.enable_cdn && length(var.cdn_domains) > 0 ? 1 : 0
   project = var.project_id
@@ -660,7 +670,7 @@ resource "google_compute_global_forwarding_rule" "cdn_http" {
 }
 
 resource "google_compute_target_https_proxy" "cdn" {
-  count            = var.enable_cdn ? 1 : 0
+  count            = var.enable_cdn && local.cdn_https ? 1 : 0
   project          = var.project_id
   name             = "${var.service_name}-https-proxy"
   url_map          = google_compute_url_map.cdn[0].id
@@ -670,7 +680,7 @@ resource "google_compute_target_https_proxy" "cdn" {
 }
 
 resource "google_compute_global_forwarding_rule" "cdn" {
-  count                 = var.enable_cdn ? 1 : 0
+  count                 = var.enable_cdn && local.cdn_https ? 1 : 0
   project               = var.project_id
   name                  = "${var.service_name}-https-rule"
   target                = google_compute_target_https_proxy.cdn[0].id

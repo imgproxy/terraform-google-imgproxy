@@ -1,6 +1,7 @@
 # Insecure imgproxy Deployment Example
 
-⚠️ **WARNING**: This example deploys imgproxy in **insecure mode** with no request signing. It is intended for **development and testing only**. Never use this configuration in production.
+> [!WARNING]
+> This example deploys imgproxy in **insecure mode** with no request signing. It is intended for **development and testing only**. Never use this configuration in production.
 
 ## What This Deploys
 

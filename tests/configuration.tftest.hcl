@@ -98,12 +98,12 @@ run "secrets_map_custom_version" {
   }
 
   assert {
-    condition     = length([for e in google_cloud_run_v2_service.main.template[0].containers[0].env : e if e.name == "IMGPROXY_NEW_RELIC_KEY" && e.value_source[0].secret_key_ref[0].version == "3"]) == 1
+    condition     = length([for e in google_cloud_run_v2_service.main.template[0].containers[0].env : e if e.name == "IMGPROXY_NEW_RELIC_KEY" && try(e.value_source[0].secret_key_ref[0].version, "") == "3"]) == 1
     error_message = "custom version must be passed through to the container env"
   }
 
   assert {
-    condition     = length([for e in google_cloud_run_v2_service.main.template[0].containers[0].env : e if e.name == "IMGPROXY_SENTRY_DSN" && e.value_source[0].secret_key_ref[0].version == "latest"]) == 1
+    condition     = length([for e in google_cloud_run_v2_service.main.template[0].containers[0].env : e if e.name == "IMGPROXY_SENTRY_DSN" && try(e.value_source[0].secret_key_ref[0].version, "") == "latest"]) == 1
     error_message = "omitted version must default to latest"
   }
 }

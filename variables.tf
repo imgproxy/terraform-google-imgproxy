@@ -367,7 +367,7 @@ variable "cdn_log_sample_rate" {
 variable "cdn_redirect_http_to_https" {
   type        = bool
   default     = true
-  description = "Automatically redirect HTTP traffic to HTTPS. Recommended for security."
+  description = "Automatically redirect HTTP traffic to HTTPS. Recommended for security. Must be false when no certificate is configured (HTTP-only CDN, for testing)."
 }
 
 # ── Service Configuration ─────────────────────────────────────────────────────

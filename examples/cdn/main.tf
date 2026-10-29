@@ -4,7 +4,7 @@ variable "project_id" {
 }
 
 module "imgproxy" {
-  source = "../.."
+  source = "github.com/imgproxy/terraform-google-imgproxy"
 
   project_id   = var.project_id
   service_name = "imgproxy"

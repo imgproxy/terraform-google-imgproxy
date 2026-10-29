@@ -23,8 +23,11 @@ openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
 ## Deploy
 
 ```bash
+echo 'project_id = "my-project"' > terraform.tfvars
+
 terraform init
-terraform apply -var project_id=my-project
+terraform plan
+terraform apply
 
 URL=$(terraform output -raw url)
 
@@ -33,6 +36,14 @@ curl -I "$URL/insecure/plain/https://picsum.photos/200"   # 403 Forbidden
 ```
 
 Generate signed URLs with [imgproxy's signing algorithm](https://docs.imgproxy.net/usage/signing_the_url).
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+The secrets created in Prerequisites are not managed by Terraform; delete them with `gcloud secrets delete`.
 
 ## Next
 

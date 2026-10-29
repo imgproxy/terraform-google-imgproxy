@@ -15,8 +15,11 @@ gcloud config set project YOUR_PROJECT_ID
 ```
 
 ```bash
+echo 'project_id = "my-project"' > terraform.tfvars
+
 terraform init
-terraform apply -var project_id=my-project
+terraform plan
+terraform apply
 
 gcloud storage cp photo.jpg gs://my-project-imgproxy-images/photo.jpg
 
@@ -25,6 +28,14 @@ curl "$(terraform output -raw url)/<signature>/rs:fit:300:200/plain/gs://my-proj
 ```
 
 The module does not create buckets; here the example creates one itself.
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+Terraform cannot delete the bucket while it contains objects; empty it first (`gcloud storage rm -r gs://my-project-imgproxy-images/**`). The secrets from the [signed](../signed/) example are not managed by Terraform.
 
 ## Next
 

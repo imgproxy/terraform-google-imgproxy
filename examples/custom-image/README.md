@@ -29,7 +29,25 @@ docker tag darthsim/imgproxy:v4 \
 docker push us-central1-docker.pkg.dev/my-project/imgproxy-mirror/imgproxy:v4
 ```
 
+## Deploy
+
+```bash
+echo 'project_id = "my-project"' > terraform.tfvars
+
+terraform init
+terraform plan
+terraform apply
+```
+
 Signing keys are required; see [signed](../signed/).
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+The `imgproxy-mirror` Artifact Registry repository was created with `gcloud`, not Terraform; delete it with `gcloud artifacts repositories delete imgproxy-mirror --location=us-central1`.
 
 ## Next
 

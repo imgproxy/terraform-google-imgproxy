@@ -13,8 +13,11 @@ gcloud config set project YOUR_PROJECT_ID
 ```
 
 ```bash
+echo 'project_id = "my-project"' > terraform.tfvars
+
 terraform init
-terraform apply -var project_id=my-project
+terraform plan
+terraform apply
 
 terraform output cdn_ip
 # Point a DNS A record at it, e.g. cdn.example.com.  A  8.232.52.166
@@ -42,6 +45,14 @@ curl -I https://cdn.example.com/health
 
 With CDN enabled, direct access to the Cloud Run URL is blocked
 (`INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`); all traffic goes through the CDN.
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+The secrets from the [signed](../signed/) example are not managed by Terraform. Remove the DNS A record you created.
 
 ## Next
 

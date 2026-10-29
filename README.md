@@ -47,13 +47,13 @@ Unsigned requests are rejected; sign URLs with [imgproxy's signing algorithm](ht
 
 ## Examples
 
+- [insecure](examples/insecure/) - Minimal deployment without request signing (development only)
 - [signed](examples/signed/) - Production setup with URL signing
 - [gcs](examples/gcs/) - Private GCS bucket as the image source
+- [cdn](examples/cdn/) - Cloud CDN with a global HTTPS load balancer
 - [pro](examples/pro/) - imgproxy Pro with license key and GCS result cache
 - [custom-image](examples/custom-image/) - Custom image or your own Artifact Registry mirror
-- [cdn](examples/cdn/) - Cloud CDN with a global HTTPS load balancer
 - [complete](examples/complete/) - Full-featured deployment with Pro, monitoring, and GCS
-- [insecure](examples/insecure/) - Minimal deployment without request signing (development only)
 
 ## Notes
 

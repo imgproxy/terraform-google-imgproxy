@@ -50,8 +50,11 @@ encryption, trusted signatures, extra secrets, CDN).
 1. **Deploy:**
 
 ```bash
+echo 'project_id = "my-gcp-project"' > terraform.tfvars
+
 terraform init
-terraform apply -var project_id=my-gcp-project
+terraform plan
+terraform apply
 ```
 
 2. **Access the service:**

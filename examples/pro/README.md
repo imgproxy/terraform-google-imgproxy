@@ -25,11 +25,22 @@ openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
 ## Deploy
 
 ```bash
+echo 'project_id = "my-project"' > terraform.tfvars
+
 terraform init
-terraform apply -var project_id=my-project
+terraform plan
+terraform apply
 ```
 
 When `cache_bucket` is set (Pro only), imgproxy caches processed results in GCS for faster subsequent requests.
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+Terraform cannot delete the source and cache buckets while they contain objects; empty them first. The secrets created in Prerequisites are not managed by Terraform.
 
 ## Next
 

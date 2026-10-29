@@ -25,21 +25,17 @@ A minimal imgproxy deployment with:
 
 ## Usage
 
-1. **Create a `terraform.tfvars` file:**
-
-```hcl
-project_id = "my-dev-project"
-```
-
-2. **Deploy:**
+1. **Deploy:**
 
 ```bash
+echo 'project_id = "my-dev-project"' > terraform.tfvars
+
 terraform init
 terraform plan
 terraform apply
 ```
 
-3. **Test the service:**
+2. **Test the service:**
 
 ```bash
 # Get the URL

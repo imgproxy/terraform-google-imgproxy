@@ -29,13 +29,26 @@ terraform init
 terraform plan
 terraform apply
 
-URL=$(terraform output -raw url)
-
 # Unsigned requests are rejected
-curl -I "$URL/insecure/plain/https://picsum.photos/200"   # 403 Forbidden
+curl -I "$(terraform output -raw url)/insecure/plain/https://picsum.photos/200"   # 403 Forbidden
 ```
 
-Generate signed URLs with [imgproxy's signing algorithm](https://docs.imgproxy.net/usage/signing_the_url).
+Print a signed URL (paste it into a browser):
+
+```bash
+(
+URL=$(terraform output -raw url)
+KEY=$(gcloud secrets versions access latest --secret=imgproxy-keys)
+SALT=$(gcloud secrets versions access latest --secret=imgproxy-salts)
+IMG_PATH="/rs:fit:300:300/plain/https://picsum.photos/1200/800.jpg"
+SIG=$( (printf '%s' "$SALT" | xxd -r -p; printf '%s' "$IMG_PATH") \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$KEY -binary \
+  | openssl base64 -A | tr '+/' '-_' | tr -d '=' )
+echo "$URL/$SIG$IMG_PATH"
+)
+```
+
+This assumes a single key/salt pair. See [imgproxy's signing algorithm](https://docs.imgproxy.net/usage/signing_the_url) for details.
 
 ## Cleanup
 
@@ -43,7 +56,12 @@ Generate signed URLs with [imgproxy's signing algorithm](https://docs.imgproxy.n
 terraform destroy
 ```
 
-The secrets created in Prerequisites are not managed by Terraform; delete them with `gcloud secrets delete`.
+The secrets created in Prerequisites are not managed by Terraform; delete them separately:
+
+```bash
+gcloud secrets delete imgproxy-keys
+gcloud secrets delete imgproxy-salts
+```
 
 ## Next
 

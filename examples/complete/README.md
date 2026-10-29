@@ -84,9 +84,16 @@ gcloud storage cp test-image.jpg gs://my-gcp-project-imgproxy-source/
 Then access it via imgproxy using a signed URL:
 
 ```bash
-# Generate a signed URL using imgproxy's signing algorithm
-# See: https://docs.imgproxy.net/usage/signing_the_url
-curl "$(terraform output -raw url)/<signature>/plain/gs://my-gcp-project-imgproxy-source/test-image.jpg"
+(
+URL=$(terraform output -raw url)
+KEY=$(gcloud secrets versions access latest --secret=imgproxy-keys)
+SALT=$(gcloud secrets versions access latest --secret=imgproxy-salts)
+IMG_PATH="/plain/gs://my-gcp-project-imgproxy-source/test-image.jpg"
+SIG=$( (printf '%s' "$SALT" | xxd -r -p; printf '%s' "$IMG_PATH") \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$KEY -binary \
+  | openssl base64 -A | tr '+/' '-_' | tr -d '=' )
+curl "$URL/$SIG$IMG_PATH" -o output.jpg
+)
 ```
 
 ## Verifying Monitoring

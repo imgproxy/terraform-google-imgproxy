@@ -42,7 +42,13 @@ terraform apply
 URL=$(terraform output -raw url)
 
 # Process a remote image (no signature required in insecure mode)
-curl "$URL/insecure/rs:fit:300:300/plain/https://example.com/image.jpg" -o output.jpg
+curl "$URL/insecure/rs:fit:300:300/plain/https://picsum.photos/1200/800.jpg" -o output.jpg
+```
+
+Print a ready-to-open URL (paste it into a browser):
+
+```bash
+echo "$(terraform output -raw url)/insecure/rs:fit:300:300/plain/https://picsum.photos/1200/800.jpg"
 ```
 
 ## Why Insecure Mode is Dangerous

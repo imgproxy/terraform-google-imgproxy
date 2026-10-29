@@ -34,8 +34,8 @@ Before using this module, ensure you have:
 Create a new directory for your imgproxy deployment:
 
 ```bash
-mkdir terraform-gcs
-cd terraform-gcs
+mkdir terraform-google
+cd terraform-google
 ```
 
 Create a `main.tf` file with your module configuration (see examples below).
@@ -66,7 +66,7 @@ Examples are ordered from simplest to most advanced. Start with the example that
 **Create `main.tf`:**
 ```hcl
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = "my-project"
   service_name = "imgproxy-dev"
@@ -117,7 +117,7 @@ variable "project_id" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy"
@@ -180,7 +180,7 @@ resource "google_storage_bucket" "images" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy"
@@ -270,7 +270,7 @@ resource "google_storage_bucket" "cache" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy-pro"
@@ -355,7 +355,7 @@ variable "project_id" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy-custom"
@@ -415,7 +415,7 @@ variable "project_id" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy"
@@ -451,7 +451,7 @@ variable "project_id" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy"
@@ -571,7 +571,7 @@ Each entry in the map creates an environment variable with its value pulled from
 
 ```hcl
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   service_name = "imgproxy"

@@ -1,3 +1,0 @@
-[submodule "common"]
-	path = modules/common
-	url = git@github.com:imgproxy/terraform-common

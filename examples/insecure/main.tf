@@ -4,7 +4,7 @@ provider "google" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-gcs"
+  source = "github.com/imgproxy/terraform-google"
 
   project_id   = var.project_id
   location     = var.location

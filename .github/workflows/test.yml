@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.5"
+
+      - name: Init
+        run: terraform init
+
+      - name: Test
+        run: terraform test

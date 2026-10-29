@@ -57,36 +57,12 @@ Without request signing:
 - **No protection against abuse** → DDoS vulnerability
 - **No control over processed images** → potential legal issues
 
-## Migrating to Production
-
-To make this deployment production-ready:
-
-1. **Enable request signing:**
-
-```bash
-# Generate keys
-openssl rand -hex 64 | gcloud secrets create imgproxy-keys --data-file=-
-openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
-```
-
-2. **Update your configuration:**
-
-```hcl
-module "imgproxy" {
-  # ...
-
-  insecure        = false
-  keys_secret_id  = "imgproxy-keys"
-  salts_secret_id = "imgproxy-salts"
-}
-```
-
-3. **Sign your requests:**
-
-See the [imgproxy documentation](https://docs.imgproxy.net/signing_the_url) for how to generate signed URLs.
-
 ## Cleanup
 
 ```bash
 terraform destroy
 ```
+
+## Next
+
+Continue with [signed](../signed/).

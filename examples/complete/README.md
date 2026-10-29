@@ -44,95 +44,23 @@ openssl rand -hex 16 | gcloud secrets create imgproxy-source-url-key --data-file
 
 ## Usage
 
-1. **Create a `terraform.tfvars` file:**
+Everything is configured in [main.tf](main.tf); edit it to enable the commented-out options (Bearer auth, source URL
+encryption, trusted signatures, extra secrets, CDN).
 
-```hcl
-project_id   = "my-gcp-project"
-location     = "us-central1"
-service_name = "imgproxy"
-description  = "imgproxy image processing service"
-
-# Security
-keys_secret_id  = "imgproxy-keys"
-salts_secret_id = "imgproxy-salts"
-signature_size  = 32
-
-# Optional: Bearer token auth (cannot be used with enable_cdn = true)
-# secret_secret_id = "projects/my-gcp-project/secrets/imgproxy-secret"
-
-# Optional: source URL encryption
-# source_url_encryption_key_secret_id = "projects/my-gcp-project/secrets/imgproxy-source-url-key"
-
-# imgproxy Pro (optional)
-pro                             = true
-pro_license_key_secret_id       = "imgproxy-pro-license"
-pro_registry_password_secret_id = "projects/my-gcp-project/secrets/imgproxy-pro-password"
-
-# Optional: trusted signatures (Pro only)
-# trusted_signatures_secret_id = "projects/my-gcp-project/secrets/imgproxy-trusted-sigs"
-
-# Additional secrets for third-party integrations (optional)
-# secrets = {
-#   IMGPROXY_NEW_RELIC_KEY = { secret = "projects/my-gcp-project/secrets/newrelic-license" }
-#   IMGPROXY_SENTRY_DSN    = { secret = "projects/my-gcp-project/secrets/sentry-dsn", version = "3" }
-# }
-
-# GCS integration (optional)
-source_buckets = ["my-project-imgproxy-source"]
-cache_bucket  = "my-project-imgproxy-cache"
-
-# Monitoring
-enable_monitoring = true
-
-# Compute resources
-cpu     = "2"
-memory  = "2Gi"
-workers = 4
-timeout = 60
-
-# Scaling
-min_instances = 2
-max_instances = 20
-service_scaling = {
-  min_instance_count = 2
-}
-
-# Access control
-ingress               = "INGRESS_TRAFFIC_ALL"
-allow_unauthenticated = true
-
-# Labels
-service_labels = {
-  app  = "imgproxy"
-  team = "platform"
-}
-
-# Cloud CDN (optional — requires a domain name)
-# enable_cdn                 = true
-# cdn_domains                = ["cdn.example.com"]
-# cdn_cache_mode             = "CACHE_ALL_STATIC"
-# cdn_default_ttl            = 3600
-# cdn_max_ttl                = 86400
-# cdn_client_ttl             = 3600
-# cdn_negative_caching       = true
-# cdn_redirect_http_to_https = true
-```
-
-2. **Deploy:**
+1. **Deploy:**
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project_id=my-gcp-project
 ```
 
-3. **Access the service:**
+2. **Access the service:**
 
 ```bash
 terraform output url
 ```
 
-4. **If CDN is enabled, point DNS:**
+3. **If CDN is enabled, point DNS:**
 
 ```bash
 # Get the CDN static IP
@@ -147,7 +75,7 @@ terraform output cdn_ip_address
 Upload a test image to the source bucket:
 
 ```bash
-gcloud storage cp test-image.jpg gs://my-project-imgproxy-source/
+gcloud storage cp test-image.jpg gs://my-gcp-project-imgproxy-source/
 ```
 
 Then access it via imgproxy using a signed URL:
@@ -155,7 +83,7 @@ Then access it via imgproxy using a signed URL:
 ```bash
 # Generate a signed URL using imgproxy's signing algorithm
 # See: https://docs.imgproxy.net/usage/signing_the_url
-curl "$(terraform output -raw url)/<signature>/plain/gs://my-project-imgproxy-source/test-image.jpg"
+curl "$(terraform output -raw url)/<signature>/plain/gs://my-gcp-project-imgproxy-source/test-image.jpg"
 ```
 
 ## Verifying Monitoring

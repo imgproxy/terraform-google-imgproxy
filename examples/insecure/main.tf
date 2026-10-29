@@ -1,15 +1,35 @@
+terraform {
+  required_version = ">= 1.5"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6.0"
+    }
+  }
+}
+
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+}
+
+provider "google" {
+  project = var.project_id
+  region  = "us-central1"
+}
+
 module "imgproxy" {
   source = "github.com/imgproxy/terraform-google-imgproxy"
 
   project_id   = var.project_id
-  location     = var.location
-  service_name = var.service_name
+  location     = "us-central1"
+  service_name = "imgproxy-insecure"
+  tag          = "v4"
 
   # WARNING: Insecure mode - no request signing
   # Use only for development/testing
   insecure = true
-
-  tag = var.tag
 }
 
 output "url" {

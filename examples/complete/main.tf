@@ -1,14 +1,33 @@
+terraform {
+  required_version = ">= 1.5"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6.0"
+    }
+  }
+}
+
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+}
+
+provider "google" {
+  project = var.project_id
+  region  = "us-central1"
+}
+
 resource "google_storage_bucket" "source" {
-  for_each                    = toset(var.source_buckets)
-  name                        = each.value
-  location                    = var.location
+  name                        = "${var.project_id}-imgproxy-source"
+  location                    = "us-central1"
   uniform_bucket_level_access = true
 }
 
 resource "google_storage_bucket" "cache" {
-  count                       = var.cache_bucket != null ? 1 : 0
-  name                        = var.cache_bucket
-  location                    = var.location
+  name                        = "${var.project_id}-imgproxy-cache"
+  location                    = "us-central1"
   uniform_bucket_level_access = true
 }
 
@@ -16,73 +35,93 @@ module "imgproxy" {
   source = "github.com/imgproxy/terraform-google-imgproxy"
 
   project_id   = var.project_id
-  location     = var.location
-  service_name = var.service_name
-  description  = var.description
+  location     = "us-central1"
+  service_name = "imgproxy"
+  description  = "imgproxy image processing service"
+  tag          = "v4"
 
   # Security: request signing
-  keys_secret                      = var.keys_secret
-  salts_secret                     = var.salts_secret
-  signature_size                   = var.signature_size
-  secret_secret                    = var.secret_secret
-  source_url_encryption_key_secret = var.source_url_encryption_key_secret
+  keys_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-keys"
+  }
+  salts_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-salts"
+  }
+  signature_size = 32
 
-  # imgproxy version and edition
-  tag = var.tag
-  pro = var.pro
+  # Optional: Bearer token auth (cannot be used with enable_cdn = true)
+  # secret_secret = {
+  #   id = "projects/${var.project_id}/secrets/imgproxy-secret"
+  # }
 
-  # imgproxy Pro configuration
-  pro_license_key_secret       = var.pro_license_key_secret
-  pro_registry_password_secret = var.pro_registry_password_secret
-  trusted_signatures_secret    = var.trusted_signatures_secret
+  # Optional: source URL encryption
+  # source_url_encryption_key_secret = {
+  #   id = "projects/${var.project_id}/secrets/imgproxy-source-url-key"
+  # }
 
-  # Additional secrets (e.g. New Relic, Sentry, OpenTelemetry)
-  secrets = var.secrets
+  # imgproxy Pro
+  pro = true
+  pro_license_key_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-pro-license"
+  }
+  pro_registry_password_secret = {
+    id = "projects/${var.project_id}/secrets/imgproxy-pro-password"
+  }
 
-  # GCS integration
-  source_buckets = [for b in google_storage_bucket.source : b.name]
-  cache_bucket   = try(google_storage_bucket.cache[0].name, null)
+  # Optional: trusted signatures (Pro only)
+  # trusted_signatures_secret = {
+  #   id = "projects/${var.project_id}/secrets/imgproxy-trusted-sigs"
+  # }
 
-  # Monitoring
-  enable_monitoring     = var.enable_monitoring
-  otel_collector_config = var.otel_collector_config
+  # Optional: additional secrets for third-party integrations
+  # secrets = {
+  #   IMGPROXY_NEW_RELIC_KEY = { id = "projects/${var.project_id}/secrets/newrelic-license" }
+  #   IMGPROXY_SENTRY_DSN    = { id = "projects/${var.project_id}/secrets/sentry-dsn", version = "3" }
+  # }
+
+  # GCS integration: source images and result cache (Pro)
+  source_buckets = [google_storage_bucket.source.name]
+  cache_bucket   = google_storage_bucket.cache.name
+
+  # Monitoring (OpenTelemetry collector sidecar)
+  enable_monitoring = true
 
   # Compute resources
-  cpu                   = var.cpu
-  memory                = var.memory
-  cpu_idle              = var.cpu_idle
-  workers               = var.workers
-  timeout               = var.timeout
-  execution_environment = var.execution_environment
+  cpu     = 2
+  memory  = "2Gi"
+  workers = 4
+  timeout = 60
 
   # Scaling
-  min_instances   = var.min_instances
-  max_instances   = var.max_instances
-  service_scaling = var.service_scaling
+  min_instances = 2
+  max_instances = 20
 
   # Access control
-  ingress               = var.ingress
-  allow_unauthenticated = var.allow_unauthenticated
+  ingress               = "INGRESS_TRAFFIC_ALL"
+  allow_unauthenticated = true
 
   # Labels
-  service_labels  = var.service_labels
-  template_labels = var.template_labels
+  service_labels = {
+    app  = "imgproxy"
+    team = "platform"
+  }
 
-  # Cloud CDN
-  enable_cdn                 = var.enable_cdn
-  cdn_domains                = var.cdn_domains
-  cdn_ssl_certificates       = var.cdn_ssl_certificates
-  cdn_cache_mode             = var.cdn_cache_mode
-  cdn_default_ttl            = var.cdn_default_ttl
-  cdn_max_ttl                = var.cdn_max_ttl
-  cdn_client_ttl             = var.cdn_client_ttl
-  cdn_negative_caching       = var.cdn_negative_caching
-  cdn_redirect_http_to_https = var.cdn_redirect_http_to_https
+  # Optional: Cloud CDN (requires a domain name)
+  # enable_cdn                 = true
+  # cdn_domains                = ["cdn.example.com"]
+  # cdn_cache_mode             = "CACHE_ALL_STATIC"
+  # cdn_default_ttl            = 3600
+  # cdn_max_ttl                = 86400
+  # cdn_client_ttl             = 3600
+  # cdn_negative_caching       = true
+  # cdn_redirect_http_to_https = true
 
   # Additional imgproxy configuration
   environment = {
     IMGPROXY_MAX_SRC_RESOLUTION = "50.0"
     IMGPROXY_JPEG_PROGRESSIVE   = "true"
+    IMGPROXY_CACHE_USE          = "gcs"
+    IMGPROXY_CACHE_BUCKET       = google_storage_bucket.cache.name
   }
 }
 
@@ -91,22 +130,7 @@ output "url" {
   value       = module.imgproxy.url
 }
 
-output "service_name" {
-  description = "The Cloud Run service name"
-  value       = module.imgproxy.service_name
-}
-
-output "service_account_email" {
-  description = "Email of the imgproxy service account"
-  value       = module.imgproxy.service_account_email
-}
-
 output "cdn_ip_address" {
   description = "Static IP address of the CDN load balancer (when CDN enabled)"
   value       = module.imgproxy.cdn_ip_address
-}
-
-output "cdn_managed_certificate_id" {
-  description = "ID of the managed SSL certificate (when CDN enabled with managed cert)"
-  value       = module.imgproxy.cdn_managed_certificate_id
 }

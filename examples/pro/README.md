@@ -30,3 +30,7 @@ terraform apply -var project_id=my-project
 ```
 
 When `cache_bucket` is set (Pro only), imgproxy caches processed results in GCS for faster subsequent requests.
+
+## Next
+
+Continue with [custom-image](../custom-image/).

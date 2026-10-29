@@ -25,3 +25,7 @@ curl "$(terraform output -raw url)/<signature>/rs:fit:300:200/plain/gs://my-proj
 ```
 
 The module does not create buckets; here the example creates one itself.
+
+## Next
+
+Continue with [cdn](../cdn/).

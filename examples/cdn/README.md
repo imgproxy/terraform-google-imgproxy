@@ -42,3 +42,7 @@ curl -I https://cdn.example.com/health
 
 With CDN enabled, direct access to the Cloud Run URL is blocked
 (`INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`); all traffic goes through the CDN.
+
+## Next
+
+Continue with [pro](../pro/).

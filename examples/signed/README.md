@@ -33,3 +33,7 @@ curl -I "$URL/insecure/plain/https://picsum.photos/200"   # 403 Forbidden
 ```
 
 Generate signed URLs with [imgproxy's signing algorithm](https://docs.imgproxy.net/usage/signing_the_url).
+
+## Next
+
+Continue with [gcs](../gcs/).

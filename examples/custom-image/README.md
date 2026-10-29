@@ -23,10 +23,14 @@ gcloud artifacts repositories create imgproxy-mirror \
   --location=us-central1 \
   --description="imgproxy mirror"
 
-docker pull darthsim/imgproxy:v3.0
-docker tag darthsim/imgproxy:v3.0 \
-  us-central1-docker.pkg.dev/my-project/imgproxy-mirror/imgproxy:v3.0
-docker push us-central1-docker.pkg.dev/my-project/imgproxy-mirror/imgproxy:v3.0
+docker pull darthsim/imgproxy:v4
+docker tag darthsim/imgproxy:v4 \
+  us-central1-docker.pkg.dev/my-project/imgproxy-mirror/imgproxy:v4
+docker push us-central1-docker.pkg.dev/my-project/imgproxy-mirror/imgproxy:v4
 ```
 
 Signing keys are required; see [signed](../signed/).
+
+## Next
+
+Continue with [complete](../complete/).

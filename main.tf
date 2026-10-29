@@ -391,7 +391,7 @@ resource "google_cloud_run_v2_service" "main" {
     }
 
     precondition {
-      condition     = var.vpc_access == null || var.vpc_access.connector == null || var.vpc_access.network_interfaces == null
+      condition     = var.vpc_access == null ? true : (var.vpc_access.connector == null || var.vpc_access.network_interfaces == null)
       error_message = "vpc_access.connector and vpc_access.network_interfaces are mutually exclusive. Use a VPC connector OR direct VPC egress (network_interfaces), not both."
     }
 

@@ -2,6 +2,15 @@
 
 imgproxy Pro with a license key, GCS source bucket and GCS result cache.
 
+## Google Cloud setup
+
+You need a Google Cloud project and the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticated:
+
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
 ## Prerequisites
 
 ```bash

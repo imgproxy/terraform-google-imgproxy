@@ -3,6 +3,15 @@
 Global HTTPS load balancer with Cloud CDN caching processed images at edge locations. A domain
 name for the SSL certificate is recommended (see below for testing without one). Signing keys are required; see [signed](../signed/).
 
+## Google Cloud setup
+
+You need a Google Cloud project and the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticated:
+
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
 ```bash
 terraform init
 terraform apply -var project_id=my-project

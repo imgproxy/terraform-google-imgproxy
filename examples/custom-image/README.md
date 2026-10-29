@@ -6,6 +6,15 @@ and air-gapped setups.
 When `repo` is set, the module skips creating Artifact Registry remote repositories. `tag` accepts regular
 tags and `sha256:...` digests.
 
+## Google Cloud setup
+
+You need a Google Cloud project and the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticated:
+
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
 ## Mirror imgproxy into Artifact Registry
 
 ```bash

@@ -13,6 +13,15 @@ This example demonstrates a full-featured imgproxy deployment with all available
 - Custom resource limits, concurrency, and scaling
 - Service and template labels
 
+## Google Cloud setup
+
+You need a Google Cloud project and the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticated:
+
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
 ## Prerequisites
 
 **Create Secret Manager secrets:**

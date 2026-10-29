@@ -2,6 +2,15 @@
 
 Production imgproxy with request signing, so only URLs signed with your key and salt are processed.
 
+## Google Cloud setup
+
+You need a Google Cloud project and the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticated:
+
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
 ## Prerequisites
 
 Create the signing keys and store them in Secret Manager:

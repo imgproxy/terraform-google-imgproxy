@@ -3,6 +3,15 @@
 > [!WARNING]
 > This example deploys imgproxy in **insecure mode** with no request signing. It is intended for **development and testing only**. Never use this configuration in production.
 
+## Google Cloud setup
+
+You need a Google Cloud project and the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticated:
+
+```bash
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+```
+
 ## What This Deploys
 
 A minimal imgproxy deployment with:

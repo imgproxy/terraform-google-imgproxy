@@ -13,39 +13,9 @@ Terraform module to deploy [imgproxy](https://imgproxy.net/) on Google Cloud Run
 - **Artifact Registry remote repositories** for transparent image caching from ghcr.io and docker.imgproxy.pro
 - **VPC access** support for private network egress
 
-## Usage
-
-Create the signing keys in Secret Manager first:
-
-```bash
-openssl rand -hex 64 | gcloud secrets create imgproxy-keys --data-file=-
-openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
-```
-
-```hcl
-module "imgproxy" {
-  source  = "imgproxy/imgproxy/google"
-  version = "~> 1.0"
-
-  project_id   = "my-project"
-  service_name = "imgproxy"
-
-  keys_secret = {
-    id = "projects/my-project/secrets/imgproxy-keys"
-  }
-  salts_secret = {
-    id = "projects/my-project/secrets/imgproxy-salts"
-  }
-}
-
-output "url" {
-  value = module.imgproxy.url
-}
-```
-
-Unsigned requests are rejected; sign URLs with [imgproxy's signing algorithm](https://docs.imgproxy.net/usage/signing_the_url).
-
 ## Examples
+
+Start with [insecure](examples/insecure/) and follow the "Next" link at the end of each README; every step adds one feature.
 
 - [insecure](examples/insecure/) - Minimal deployment without request signing (development only)
 - [signed](examples/signed/) - Production setup with URL signing

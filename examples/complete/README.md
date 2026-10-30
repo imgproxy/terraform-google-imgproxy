@@ -109,7 +109,7 @@ echo "$URL/$SIG$IMG_PATH"
 After deployment with `enable_monitoring = true`, verify telemetry is flowing:
 
 1. Go to Cloud Console → Trace → Trace explorer and confirm new traces appear for imgproxy requests
-2. Go to Cloud Console → Monitoring → Metrics Explorer and search for `workload.googleapis.com`
+2. Go to Cloud Console → Monitoring → Metrics Explorer, click **Select a metric**, untick **Active** if nothing is listed, and pick resource type **Generic Task** (`job` = `imgproxy`). The metrics are under the `workload.googleapis.com` prefix, e.g. `requests_total`, `request_duration_seconds`, `status_codes_total`, `workers_utilization`. They appear within a minute or two of the first requests
 3. Go to Cloud Console → Logging → Logs Explorer and filter by your Cloud Run service name
 
 ## Cleanup

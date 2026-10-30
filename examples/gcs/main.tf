@@ -18,12 +18,6 @@ provider "google" {
   project = var.project_id
 }
 
-resource "google_storage_bucket" "images" {
-  name                        = "${var.project_id}-imgproxy-images"
-  location                    = "us-central1"
-  uniform_bucket_level_access = true
-}
-
 module "imgproxy" {
   source = "github.com/imgproxy/terraform-google-imgproxy"
 
@@ -39,8 +33,8 @@ module "imgproxy" {
     id = "projects/${var.project_id}/secrets/imgproxy-salts"
   }
 
-  # Grants read access to the bucket and enables the gs:// URL scheme
-  source_buckets = [google_storage_bucket.images.name]
+  # Existing bucket (see README): grants read access and enables the gs:// URL scheme
+  source_buckets = ["${var.project_id}-imgproxy-images"]
 }
 
 output "url" {

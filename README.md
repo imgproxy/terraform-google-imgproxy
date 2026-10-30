@@ -22,7 +22,6 @@ Start with [insecure](examples/insecure/) and follow the "Next" link at the end 
 - [gcs](examples/gcs/) - Private GCS bucket as the image source
 - [cdn](examples/cdn/) - Cloud CDN with a global HTTPS load balancer
 - [pro](examples/pro/) - imgproxy Pro with license key and GCS result cache
-- [custom-image](examples/custom-image/) - Custom image or your own Artifact Registry mirror
 - [complete](examples/complete/) - Full-featured deployment with Pro, monitoring, and GCS
 
 ## Notes

@@ -19,18 +19,6 @@ provider "google" {
   region  = "us-central1"
 }
 
-resource "google_storage_bucket" "source" {
-  name                        = "${var.project_id}-imgproxy-source"
-  location                    = "us-central1"
-  uniform_bucket_level_access = true
-}
-
-resource "google_storage_bucket" "cache" {
-  name                        = "${var.project_id}-imgproxy-cache"
-  location                    = "us-central1"
-  uniform_bucket_level_access = true
-}
-
 module "imgproxy" {
   source = "github.com/imgproxy/terraform-google-imgproxy"
 
@@ -79,9 +67,9 @@ module "imgproxy" {
   #   IMGPROXY_SENTRY_DSN    = { id = "projects/${var.project_id}/secrets/sentry-dsn", version = "3" }
   # }
 
-  # GCS integration: source images and result cache (Pro)
-  source_buckets = [google_storage_bucket.source.name]
-  cache_bucket   = google_storage_bucket.cache.name
+  # Existing buckets (see README): source images and result cache (Pro)
+  source_buckets = ["${var.project_id}-imgproxy-complete-source"]
+  cache_bucket   = "${var.project_id}-imgproxy-complete-cache"
 
   # Monitoring (OpenTelemetry collector sidecar)
   enable_monitoring = true
@@ -121,7 +109,7 @@ module "imgproxy" {
     IMGPROXY_MAX_SRC_RESOLUTION = "50.0"
     IMGPROXY_JPEG_PROGRESSIVE   = "true"
     IMGPROXY_CACHE_USE          = "gcs"
-    IMGPROXY_CACHE_BUCKET       = google_storage_bucket.cache.name
+    IMGPROXY_CACHE_BUCKET       = "${var.project_id}-imgproxy-complete-cache"
   }
 }
 

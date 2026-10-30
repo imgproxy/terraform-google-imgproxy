@@ -33,20 +33,27 @@ module "imgproxy" {
     id = "projects/${var.project_id}/secrets/imgproxy-salts"
   }
 
-  enable_cdn  = true
-  cdn_domains = ["cdn.example.com"] # Domain for the managed SSL certificate
+  enable_cdn = true
+
+  # With a domain, a managed SSL certificate is provisioned (set cdn_redirect_http_to_https = true):
+  # cdn_domains = ["cdn.example.com"]
 
   cdn_cache_mode  = "CACHE_ALL_STATIC"
   cdn_default_ttl = 3600
   cdn_max_ttl     = 86400
   cdn_client_ttl  = 3600
 
-  cdn_redirect_http_to_https = true
+  # HTTP only, for testing without a domain; the url output is http://<static-ip>
+  cdn_redirect_http_to_https = false
+}
+
+output "url" {
+  value = module.imgproxy.url
 }
 
 output "cdn_ip" {
   value       = module.imgproxy.cdn_ip_address
-  description = "Point your DNS A record to this IP"
+  description = "Static IP of the CDN load balancer"
 }
 
 output "cert_status" {

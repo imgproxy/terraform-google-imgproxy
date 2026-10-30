@@ -16,6 +16,8 @@ gcloud config set project YOUR_PROJECT_ID
 Create the signing keys and store them in Secret Manager:
 
 ```bash
+PROJECT_ID=$(gcloud config get-value project)
+
 openssl rand -hex 64 | gcloud secrets create imgproxy-keys --data-file=-
 openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
 ```
@@ -23,7 +25,7 @@ openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
 ## Deploy
 
 ```bash
-echo 'project_id = "my-project"' > terraform.tfvars
+echo "project_id = \"$PROJECT_ID\"" > terraform.tfvars
 
 terraform init
 terraform plan

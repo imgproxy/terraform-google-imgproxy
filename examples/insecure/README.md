@@ -1,7 +1,12 @@
-# Insecure imgproxy Deployment Example
+# Insecure mode
+
+Minimal imgproxy on Cloud Run with no request signing (`insecure = true`): community edition, default resource
+limits, public access, no monitoring and no GCS. It fetches public placeholder images.
 
 > [!WARNING]
-> This example deploys imgproxy in **insecure mode** with no request signing. It is intended for **development and testing only**. Never use this configuration in production.
+> This example is intended for **development and testing only**. Without request signing anyone can use your
+> imgproxy (unlimited bandwidth costs, no protection against abuse, no control over processed images). Never use
+> this configuration in production.
 
 ## Google Cloud setup
 
@@ -12,52 +17,27 @@ gcloud auth application-default login
 gcloud config set project YOUR_PROJECT_ID
 ```
 
-## What This Deploys
-
-A minimal imgproxy deployment with:
-
-- **No request signing** (`insecure = true`)
-- Community edition (not Pro)
-- Default resource limits (1 CPU, 512Mi memory)
-- Public access allowed
-- No monitoring sidecar
-- No GCS integration
-
-## Usage
-
-1. **Deploy:**
+## Prerequisites
 
 ```bash
-echo 'project_id = "my-dev-project"' > terraform.tfvars
+PROJECT_ID=$(gcloud config get-value project)
+```
+
+## Deploy
+
+```bash
+echo "project_id = \"$PROJECT_ID\"" > terraform.tfvars
 
 terraform init
 terraform plan
 terraform apply
 ```
 
-2. **Test the service:**
-
-```bash
-# Get the URL
-URL=$(terraform output -raw url)
-
-# Process a remote image (no signature required in insecure mode)
-curl "$URL/insecure/rs:fit:300:300/plain/https://picsum.photos/1200/800.jpg" -o output.jpg
-```
-
-Print a ready-to-open URL (paste it into a browser):
+Print a ready-to-open URL (paste it into a browser; no signature is required in insecure mode):
 
 ```bash
 echo "$(terraform output -raw url)/insecure/rs:fit:300:300/plain/https://picsum.photos/1200/800.jpg"
 ```
-
-## Why Insecure Mode is Dangerous
-
-Without request signing:
-
-- **Anyone can use your imgproxy** → unlimited bandwidth costs
-- **No protection against abuse** → DDoS vulnerability
-- **No control over processed images** → potential legal issues
 
 ## Cleanup
 

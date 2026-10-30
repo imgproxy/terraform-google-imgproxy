@@ -32,8 +32,9 @@ module "imgproxy_common" {
   otel_service_name = var.service_name
 
   # Secrets
-  insecure                         = var.insecure
-  environment                      = var.environment
+  insecure = var.insecure
+  # Cloud Run forwards an unsampled trace header on most requests; always_on keeps every imgproxy trace
+  environment                      = var.enable_monitoring ? merge({ OTEL_TRACES_SAMPLER = "always_on" }, var.environment) : var.environment
   secrets                          = var.secrets
   keys_secret                      = var.keys_secret
   salts_secret                     = var.salts_secret

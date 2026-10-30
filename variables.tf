@@ -233,6 +233,8 @@ variable "otel_collector_config" {
 
     processors:
       batch:
+      resourcedetection:
+        detectors: [gcp]
 
     exporters:
       googlecloud:
@@ -246,15 +248,15 @@ variable "otel_collector_config" {
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [batch]
+          processors: [resourcedetection, batch]
           exporters: [googlecloud]
         metrics:
           receivers: [otlp]
-          processors: [batch]
+          processors: [resourcedetection, batch]
           exporters: [googlecloud]
         logs:
           receivers: [otlp]
-          processors: [batch]
+          processors: [resourcedetection, batch]
           exporters: [googlecloud]
   EOT
   description = "OpenTelemetry collector configuration file mounted at /etc/otel/config.yaml when monitoring is enabled. Supports collector environment variable expansion such as $${GOOGLE_CLOUD_PROJECT}."

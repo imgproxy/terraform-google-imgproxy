@@ -114,34 +114,18 @@ After deployment with `enable_monitoring = true`, verify telemetry is flowing:
 
 ## Cleanup
 
-To avoid ongoing charges, remove everything created by this example.
-
-1. **Destroy the Terraform-managed resources** (Cloud Run service, service accounts, CDN/load balancer, monitoring):
-
 ```bash
 terraform destroy
 ```
 
-2. **Delete the GCS buckets** and their contents (created with `gcloud`, so Terraform does not remove them):
+The buckets and the secrets were created with `gcloud`, so delete them separately (and remove the DNS A record if you added a domain):
 
 ```bash
-gcloud storage rm --recursive gs://$PROJECT_ID-imgproxy-complete-source gs://$PROJECT_ID-imgproxy-complete-cache
+gcloud storage rm -r gs://$PROJECT_ID-imgproxy-complete-source gs://$PROJECT_ID-imgproxy-complete-cache
+gcloud secrets delete imgproxy-keys
+gcloud secrets delete imgproxy-salts
+gcloud secrets delete imgproxy-pro-license
+gcloud secrets delete imgproxy-pro-password
+gcloud secrets delete imgproxy-secret
+gcloud secrets delete imgproxy-source-url-key
 ```
-
-3. **Delete the Secret Manager secrets** created in Prerequisites:
-
-```bash
-for s in imgproxy-keys imgproxy-salts imgproxy-pro-license imgproxy-pro-password imgproxy-secret imgproxy-source-url-key; do
-  gcloud secrets delete $s --quiet
-done
-```
-
-(Ignore "not found" errors for secrets you did not create.)
-
-4. **Remove local files:**
-
-```bash
-rm -f terraform.tfvars output.jpg
-```
-
-If CDN was enabled, also delete the DNS A record you created for `cdn.example.com`.

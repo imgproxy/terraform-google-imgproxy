@@ -20,7 +20,8 @@ provider "google" {
 }
 
 module "imgproxy" {
-  source = "github.com/imgproxy/terraform-google-imgproxy"
+  source  = "imgproxy/imgproxy/google"
+  version = "~> 0.1"
 
   project_id   = var.project_id
   location     = "us-central1"

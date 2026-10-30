@@ -13,6 +13,19 @@ Terraform module to deploy [imgproxy](https://imgproxy.net/) on Google Cloud Run
 - **Artifact Registry remote repositories** for transparent image caching from ghcr.io, docker.imgproxy.pro or your own registry
 - **VPC access** support for private network egress
 
+## Usage
+
+```hcl
+module "imgproxy" {
+  source  = "imgproxy/imgproxy/google"
+  version = "~> 0.1"
+
+  project_id   = "my-project"
+  location     = "us-central1"
+  service_name = "imgproxy"
+}
+```
+
 ## Examples
 
 Start with [insecure](examples/insecure/) and follow the "Next" link at the end of each README; every step adds one feature.

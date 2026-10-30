@@ -26,8 +26,9 @@ module "imgproxy" {
   service_name = "imgproxy-pro"
   tag          = "v4"
 
+  # pro selects docker.imgproxy.pro/imgproxy as the default repo (username "imgproxy").
   pro = true
-  pro_registry_password_secret = {
+  repo_password_secret = {
     id = "projects/${var.project_id}/secrets/imgproxy-pro-password"
   }
   pro_license_key_secret = {

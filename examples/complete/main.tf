@@ -52,9 +52,13 @@ module "imgproxy" {
   pro_license_key_secret = {
     id = "projects/${var.project_id}/secrets/imgproxy-pro-license"
   }
-  pro_registry_password_secret = {
+  repo_password_secret = {
     id = "projects/${var.project_id}/secrets/imgproxy-pro-password"
   }
+
+  # Optional: pull from your own registry instead (pro then no longer affects the image)
+  # repo          = "registry.example.com/imgproxy-custom"
+  # repo_username = "deploy"
 
   # Optional: trusted signatures (Pro only)
   # trusted_signatures_secret = {

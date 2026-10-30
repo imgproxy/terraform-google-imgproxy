@@ -3,20 +3,34 @@ data "google_project" "project" {
 }
 
 locals {
-  # GCP-specific repo IDs (needed for module inputs)
-  ghcr_repo_id = "${var.service_name}-ghcr"
-  pro_repo_id  = "${var.service_name}-pro"
+  # Upstream image repository: `repo` when set, otherwise the default selected by `pro`
+  upstream_repo = var.repo != null ? var.repo : (var.pro ? "docker.imgproxy.pro/imgproxy" : "ghcr.io/imgproxy/imgproxy")
+  repo_parts    = split("/", local.upstream_repo)
+  # The first segment is a registry host only if it looks like one; otherwise the image is on Docker Hub
+  repo_has_host = length(local.repo_parts) > 1 && can(regex("[.:]", local.repo_parts[0]))
+  repo_host     = local.repo_has_host ? local.repo_parts[0] : "docker.io"
+  repo_path     = join("/", local.repo_has_host ? slice(local.repo_parts, 1, length(local.repo_parts)) : local.repo_parts)
+
+  # Cloud Run pulls directly only from gcr.io, pkg.dev and docker.io, and cannot authenticate to them.
+  # Any other host, or any repo with credentials, goes through an Artifact Registry remote repository.
+  repo_direct = var.repo_password_secret == null && (
+    local.repo_host == "docker.io" ||
+    local.repo_host == "gcr.io" ||
+    endswith(local.repo_host, ".gcr.io") ||
+    endswith(local.repo_host, ".pkg.dev")
+  )
+  # Default repos keep their historical IDs so upgrades do not recreate them
+  registry_repo_id = "${var.service_name}-${var.repo != null ? "registry" : (var.pro ? "pro" : "ghcr")}"
+  registry_user    = var.repo_username != null ? var.repo_username : (var.repo == null && var.pro ? "imgproxy" : null)
+  image_repo       = local.repo_direct ? local.upstream_repo : "${var.location}-docker.pkg.dev/${var.project_id}/${local.registry_repo_id}/${local.repo_path}"
 }
 
 module "imgproxy_common" {
   source = "./modules/imgproxy-common"
 
   # Image config
-  tag                    = var.tag
-  repo                   = var.repo
-  pro                    = var.pro
-  pro_repo_default       = "${var.location}-docker.pkg.dev/${var.project_id}/${local.pro_repo_id}/imgproxy"
-  community_repo_default = "${var.location}-docker.pkg.dev/${var.project_id}/${local.ghcr_repo_id}/imgproxy/imgproxy"
+  tag  = var.tag
+  repo = local.image_repo
 
   # Compute
   cpu            = var.cpu
@@ -111,8 +125,12 @@ resource "google_service_account" "imgproxy" {
 
   lifecycle {
     precondition {
-      condition     = !var.pro || var.pro_registry_password_secret != null || var.repo != null
-      error_message = "pro_registry_password_secret is required when pro = true and repo is not set."
+      condition     = !var.pro || var.repo != null || var.repo_password_secret != null
+      error_message = "repo_password_secret is required when pro = true and repo is not set."
+    }
+    precondition {
+      condition     = var.repo_password_secret == null || local.registry_user != null
+      error_message = "repo_username is required when repo_password_secret is set."
     }
     precondition {
       condition     = var.insecure || (var.keys_secret != null && var.salts_secret != null)
@@ -184,8 +202,8 @@ resource "google_secret_manager_secret_iam_member" "otel_config" {
 
 # The Artifact Registry Service Agent reads this secret to authenticate upstream.
 resource "google_secret_manager_secret_iam_member" "artifact_registry" {
-  count      = var.pro && var.pro_registry_password_secret != null ? 1 : 0
-  secret_id  = var.pro_registry_password_secret.id
+  count      = var.repo_password_secret != null ? 1 : 0
+  secret_id  = var.repo_password_secret.id
   role       = "roles/secretmanager.secretAccessor"
   member     = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
   depends_on = [google_project_service.apis]
@@ -414,8 +432,7 @@ resource "google_cloud_run_v2_service" "main" {
     google_secret_manager_secret_iam_member.otel_config,
     google_storage_bucket_iam_member.source,
     google_storage_bucket_iam_member.cache,
-    google_artifact_registry_repository.ghcr,
-    google_artifact_registry_repository.pro,
+    google_artifact_registry_repository.registry,
   ]
 }
 
@@ -453,19 +470,28 @@ resource "google_storage_bucket_iam_member" "cache" {
 # Cloud Run's service agent has reader access to all repos in the same project
 # by default, so no extra IAM is needed for image pulls.
 
-resource "google_artifact_registry_repository" "ghcr" {
-  count         = var.repo == null && !var.pro ? 1 : 0
+resource "google_artifact_registry_repository" "registry" {
+  count         = local.repo_direct ? 0 : 1
   project       = var.project_id
-  repository_id = local.ghcr_repo_id
+  repository_id = local.registry_repo_id
   location      = var.location
   format        = "DOCKER"
   mode          = "REMOTE_REPOSITORY"
 
   remote_repository_config {
-    description = "ghcr.io proxy"
+    description = "${local.repo_host} proxy"
     docker_repository {
       custom_repository {
-        uri = "https://ghcr.io"
+        uri = "https://${local.repo_host}"
+      }
+    }
+    dynamic "upstream_credentials" {
+      for_each = var.repo_password_secret != null ? [var.repo_password_secret] : []
+      content {
+        username_password_credentials {
+          username                = local.registry_user
+          password_secret_version = "${upstream_credentials.value.id}/versions/${upstream_credentials.value.version}"
+        }
       }
     }
   }
@@ -476,50 +502,6 @@ resource "google_artifact_registry_repository" "ghcr" {
     action = "DELETE"
     condition {
       older_than = "2592000s" # 30 days
-    }
-  }
-
-  depends_on = [google_project_service.apis, google_service_account.imgproxy]
-}
-
-# ── Pro registry (docker.imgproxy.pro) ────────────────────────────────────────
-
-resource "google_artifact_registry_repository" "pro" {
-  count         = var.repo == null && var.pro ? 1 : 0
-  project       = var.project_id
-  repository_id = local.pro_repo_id
-  location      = var.location
-  format        = "DOCKER"
-  mode          = "REMOTE_REPOSITORY"
-
-  remote_repository_config {
-    description = "docker.imgproxy.pro proxy"
-    docker_repository {
-      custom_repository {
-        uri = "https://docker.imgproxy.pro"
-      }
-    }
-    upstream_credentials {
-      username_password_credentials {
-        username                = "imgproxy"
-        password_secret_version = "${var.pro_registry_password_secret.id}/versions/${var.pro_registry_password_secret.version}"
-      }
-    }
-  }
-
-  cleanup_policy_dry_run = false
-  cleanup_policies {
-    id     = "delete-old-cached"
-    action = "DELETE"
-    condition {
-      older_than = "2592000s" # 30 days
-    }
-  }
-
-  lifecycle {
-    precondition {
-      condition     = var.pro_registry_password_secret != null
-      error_message = "pro_registry_password_secret is required when pro = true."
     }
   }
 
@@ -527,6 +509,12 @@ resource "google_artifact_registry_repository" "pro" {
     google_project_service.apis,
     google_secret_manager_secret_iam_member.artifact_registry,
   ]
+}
+
+# Terraform allows one move per target: the community proxy is preserved, a Pro proxy is recreated (it is only a cache).
+moved {
+  from = google_artifact_registry_repository.ghcr
+  to   = google_artifact_registry_repository.registry
 }
 
 # ── Cloud CDN ─────────────────────────────────────────────────────────────────

@@ -33,7 +33,7 @@ PROJECT_ID=$(gcloud config get-value project)
 openssl rand -hex 64 | gcloud secrets create imgproxy-keys --data-file=-
 openssl rand -hex 64 | gcloud secrets create imgproxy-salts --data-file=-
 
-# imgproxy Pro (if using pro = true)
+# imgproxy Pro (if using pro = true); the password is for docker.imgproxy.pro, or for your own registry set via repo
 echo -n "your-license-key" | gcloud secrets create imgproxy-pro-license --data-file=-
 echo -n "your-registry-password" | gcloud secrets create imgproxy-pro-password --data-file=-
 

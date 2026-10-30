@@ -55,7 +55,7 @@ run "pro_grants_ar_iam" {
       id      = "test-license-key-secret"
       version = "latest"
     }
-    pro_registry_password_secret = {
+    repo_password_secret = {
       id      = "test-registry-password-secret"
       version = "latest"
     }

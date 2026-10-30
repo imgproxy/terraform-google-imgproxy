@@ -26,7 +26,22 @@ variable "tag" {
 variable "repo" {
   type        = string
   default     = null
-  description = "Custom container repository to use. When set, overrides the repository constructed from 'pro'. Combined with 'tag' to form the full image reference (e.g. 'gcr.io/my-project/imgproxy')."
+  description = "Container repository to pull imgproxy from, without tag (e.g. 'registry.example.com/imgproxy' or 'gcr.io/my-project/imgproxy'). Its host is the upstream registry. When null, 'pro' selects docker.imgproxy.pro/imgproxy or ghcr.io/imgproxy/imgproxy. gcr.io, pkg.dev and docker.io repos without credentials are used directly; all others are proxied through an Artifact Registry remote repository."
+}
+
+variable "repo_username" {
+  type        = string
+  default     = null
+  description = "Username for the registry in 'repo'. Defaults to 'imgproxy' for docker.imgproxy.pro when 'repo' is not set. Required with repo_password_secret otherwise."
+}
+
+variable "repo_password_secret" {
+  type = object({
+    id      = string
+    version = optional(string, "latest")
+  })
+  default     = null
+  description = "Secret Manager secret for the registry password. Required when pro = true and repo is not set. Granted to the Artifact Registry Service Agent."
 }
 
 variable "description" {
@@ -191,16 +206,7 @@ variable "max_instances" {
 variable "pro" {
   type        = bool
   default     = false
-  description = "Use imgproxy Pro (docker.imgproxy.pro) instead of the community image (ghcr.io)."
-}
-
-variable "pro_registry_password_secret" {
-  type = object({
-    id      = string
-    version = optional(string, "latest")
-  })
-  default     = null
-  description = "Secret Manager secret for the docker.imgproxy.pro registry password. Required when pro = true. Granted to the Artifact Registry Service Agent."
+  description = "Use imgproxy Pro (docker.imgproxy.pro) instead of the community image (ghcr.io) as the default repo. Has no effect when repo is set."
 }
 
 variable "pro_license_key_secret" {

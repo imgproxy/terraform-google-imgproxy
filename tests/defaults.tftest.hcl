@@ -38,13 +38,13 @@ run "community_image_url" {
   }
 
   assert {
-    condition     = google_artifact_registry_repository.ghcr[0].repository_id == "imgproxy-ghcr"
+    condition     = google_artifact_registry_repository.registry[0].repository_id == "imgproxy-ghcr"
     error_message = "Community mode must create the ghcr remote repo"
   }
 
   assert {
-    condition     = length(google_artifact_registry_repository.pro) == 0
-    error_message = "Community mode must not create the pro repo"
+    condition     = google_artifact_registry_repository.registry[0].remote_repository_config[0].docker_repository[0].custom_repository[0].uri == "https://ghcr.io"
+    error_message = "Community mode must proxy ghcr.io"
   }
 }
 
@@ -58,14 +58,14 @@ run "pro_image_url" {
       id      = "test-license-key-secret"
       version = "latest"
     }
-    pro_registry_password_secret = {
+    repo_password_secret = {
       id      = "test-registry-password-secret"
       version = "latest"
     }
   }
 
   assert {
-    condition     = google_artifact_registry_repository.pro[0].repository_id == "imgproxy-pro"
+    condition     = google_artifact_registry_repository.registry[0].repository_id == "imgproxy-pro"
     error_message = "Pro mode must create the pro remote repo"
   }
 }
@@ -120,13 +120,55 @@ run "custom_image_override" {
   }
 
   assert {
-    condition     = length(google_artifact_registry_repository.ghcr) == 0
-    error_message = "Custom image should skip creating ghcr repo"
+    condition     = length(google_artifact_registry_repository.registry) == 0
+    error_message = "A gcr.io repo without credentials must be pulled directly, without a proxy"
+  }
+}
+
+run "custom_registry_with_credentials" {
+  command = plan
+
+  variables {
+    repo          = "registry.foo.com/imgproxy-custom"
+    repo_username = "deploy"
+    tag           = "my-tag"
+    repo_password_secret = {
+      id      = "test-registry-password-secret"
+      version = "latest"
+    }
   }
 
   assert {
-    condition     = length(google_artifact_registry_repository.pro) == 0
-    error_message = "Custom image should skip creating pro repo"
+    condition     = google_artifact_registry_repository.registry[0].repository_id == "imgproxy-registry"
+    error_message = "A custom repo must use the registry proxy repo"
+  }
+
+  assert {
+    condition     = google_artifact_registry_repository.registry[0].remote_repository_config[0].docker_repository[0].custom_repository[0].uri == "https://registry.foo.com"
+    error_message = "The proxy upstream must be the host of repo"
+  }
+
+  assert {
+    condition     = google_artifact_registry_repository.registry[0].remote_repository_config[0].upstream_credentials[0].username_password_credentials[0].username == "deploy"
+    error_message = "The proxy must use repo_username"
+  }
+
+  assert {
+    condition     = length(google_secret_manager_secret_iam_member.artifact_registry) == 1
+    error_message = "The AR service agent must be able to read the password without pro = true"
+  }
+}
+
+run "custom_registry_without_credentials" {
+  command = plan
+
+  variables {
+    repo = "registry.foo.com/imgproxy-custom"
+  }
+
+  assert {
+    condition     = length(google_artifact_registry_repository.registry[0].remote_repository_config[0].upstream_credentials) == 0
+    error_message = "An anonymous custom registry must be proxied without credentials"
   }
 }
 

@@ -39,10 +39,20 @@ run "rejects_pro_without_registry_password" {
     pro = true
   }
 
-  expect_failures = [
-    google_service_account.imgproxy,
-    google_artifact_registry_repository.pro,
-  ]
+  expect_failures = [google_service_account.imgproxy]
+}
+
+run "rejects_password_without_username" {
+  command = plan
+
+  variables {
+    repo = "registry.foo.com/imgproxy"
+    repo_password_secret = {
+      id = "test-registry-password-secret"
+    }
+  }
+
+  expect_failures = [google_service_account.imgproxy]
 }
 
 run "rejects_secure_mode_without_keys" {

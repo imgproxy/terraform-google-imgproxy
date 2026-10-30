@@ -6,11 +6,11 @@ Terraform module to deploy [imgproxy](https://imgproxy.net/) on Google Cloud Run
 
 - **Cloud Run v2 deployment** with configurable CPU, memory, and scaling
 - **Cloud CDN integration** with global HTTPS load balancer for caching and low-latency access worldwide
-- **imgproxy Pro support** via Artifact Registry remote repository with authentication
+- **imgproxy Pro and private registries** via an Artifact Registry remote repository with authentication
 - **OpenTelemetry collector sidecar** for traces, metrics, and logs to Cloud Trace, Cloud Monitoring, and Cloud Logging
 - **GCS bucket integration** for source images and result cache (Pro)
 - **Request signing** with keys and salts from Secret Manager
-- **Artifact Registry remote repositories** for transparent image caching from ghcr.io and docker.imgproxy.pro
+- **Artifact Registry remote repositories** for transparent image caching from ghcr.io, docker.imgproxy.pro or your own registry
 - **VPC access** support for private network egress
 
 ## Examples
@@ -41,7 +41,18 @@ Names should match [imgproxy's configuration](https://docs.imgproxy.net/configur
 
 ### Image delivery
 
-The module creates Artifact Registry remote repositories that proxy `ghcr.io/imgproxy/imgproxy` (Community) or `docker.imgproxy.pro/imgproxy` (Pro, authenticated). Cloud Run pulls from these proxies, which cache layers in your project. Setting `repo` skips them.
+Cloud Run pulls only from gcr.io, pkg.dev and docker.io, so the module creates an Artifact Registry remote repository that proxies the registry in `repo` and caches layers in your project. When `repo` is not set it defaults to `ghcr.io/imgproxy/imgproxy` (Community) or, with `pro = true`, `docker.imgproxy.pro/imgproxy`.
+
+To pull from a private registry, set `repo` to the image without tag, plus the credentials:
+
+```hcl
+repo                 = "registry.example.com/imgproxy-custom"
+repo_username        = "deploy"
+repo_password_secret = { id = google_secret_manager_secret.registry.id }
+tag                  = "my-tag"
+```
+
+`pro = true` only selects the default `repo`. It has no effect when `repo` is set, and for docker.imgproxy.pro only `repo_password_secret` is required (the username defaults to `imgproxy`). A `repo` on gcr.io, pkg.dev or docker.io without credentials is pulled directly, with no proxy.
 
 ### Monitoring
 
@@ -93,8 +104,7 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 
 | Name | Type |
 | ---- | ---- |
-| [google_artifact_registry_repository.ghcr](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
-| [google_artifact_registry_repository.pro](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
+| [google_artifact_registry_repository.registry](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
 | [google_cloud_run_v2_service.main](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service) | resource |
 | [google_cloud_run_v2_service_iam_member.public](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
 | [google_compute_backend_service.cdn](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_service) | resource |
@@ -161,10 +171,11 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 | memory | Memory limit for the container (e.g. "512Mi", "2Gi"). | `string` | no |
 | min\_instances | Minimum number of Cloud Run instances (set to 1 to avoid cold starts). | `number` | no |
 | otel\_collector\_config | OpenTelemetry collector configuration file mounted at /etc/otel/config.yaml when monitoring is enabled. Supports collector environment variable expansion such as ${GOOGLE\_CLOUD\_PROJECT}. | `string` | no |
-| pro | Use imgproxy Pro (docker.imgproxy.pro) instead of the community image (ghcr.io). | `bool` | no |
+| pro | Use imgproxy Pro (docker.imgproxy.pro) instead of the community image (ghcr.io) as the default repo. Has no effect when repo is set. | `bool` | no |
 | pro\_license\_key\_secret | Secret Manager secret for the imgproxy Pro license key. Sets IMGPROXY\_LICENSE\_KEY (https://docs.imgproxy.net/configuration/options#IMGPROXY_LICENSE_KEY). | ```object({ id = string version = optional(string, "latest") })``` | no |
-| pro\_registry\_password\_secret | Secret Manager secret for the docker.imgproxy.pro registry password. Required when pro = true. Granted to the Artifact Registry Service Agent. | ```object({ id = string version = optional(string, "latest") })``` | no |
-| repo | Custom container repository to use. When set, overrides the repository constructed from 'pro'. Combined with 'tag' to form the full image reference (e.g. 'gcr.io/my-project/imgproxy'). | `string` | no |
+| repo | Container repository to pull imgproxy from, without tag (e.g. 'registry.example.com/imgproxy' or 'gcr.io/my-project/imgproxy'). Its host is the upstream registry. When null, 'pro' selects docker.imgproxy.pro/imgproxy or ghcr.io/imgproxy/imgproxy. gcr.io, pkg.dev and docker.io repos without credentials are used directly; all others are proxied through an Artifact Registry remote repository. | `string` | no |
+| repo\_password\_secret | Secret Manager secret for the registry password. Required when pro = true and repo is not set. Granted to the Artifact Registry Service Agent. | ```object({ id = string version = optional(string, "latest") })``` | no |
+| repo\_username | Username for the registry in 'repo'. Defaults to 'imgproxy' for docker.imgproxy.pro when 'repo' is not set. Required with repo\_password\_secret otherwise. | `string` | no |
 | revision | Pinned revision name. When omitted, Cloud Run generates a name automatically. | `string` | no |
 | salts\_secret | Secret Manager secret containing imgproxy signing salts (comma-separated hex-encoded values). Must match the number of keys. Required when insecure = false. Sets IMGPROXY\_SALT (https://docs.imgproxy.net/configuration/options#IMGPROXY_SALT). | ```object({ id = string version = optional(string, "latest") })``` | no |
 | secret\_secret | Secret Manager secret for the authorization token. When set, requests must include Authorization: Bearer <token>. Sets IMGPROXY\_SECRET (https://docs.imgproxy.net/configuration/options#IMGPROXY_SECRET). | ```object({ id = string version = optional(string, "latest") })``` | no |

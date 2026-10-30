@@ -13,7 +13,7 @@ gcloud config set project YOUR_PROJECT_ID
 
 ## Prerequisites
 
-Create the imgproxy Pro secrets, the signing keys (see [signed](../signed/)), and a private bucket for the result cache:
+Create the imgproxy Pro secrets (`imgproxy-pro-password` is the `docker.imgproxy.pro` registry password, passed as `repo_password_secret`), the signing keys (see [signed](../signed/)), and a private bucket for the result cache:
 
 ```bash
 PROJECT_ID=$(gcloud config get-value project)
@@ -67,6 +67,8 @@ The processed results are stored in the cache bucket:
 ```bash
 gcloud storage ls -r gs://$PROJECT_ID-imgproxy-cache
 ```
+
+To pull from your own private registry instead, set `repo` (image without tag), `repo_username` and `repo_password_secret`; `pro = true` then only enables Pro features and no longer selects the image.
 
 ## Cleanup
 

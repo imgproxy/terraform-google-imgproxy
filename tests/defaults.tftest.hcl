@@ -185,8 +185,8 @@ run "cdn_with_managed_cert" {
   command = plan
 
   variables {
-    enable_cdn  = true
-    cdn_domains = ["cdn.example.com"]
+    enable_cloud_cdn = true
+    cdn_domains      = ["cdn.example.com"]
   }
 
   assert {
@@ -219,7 +219,7 @@ run "cdn_with_existing_cert" {
   command = plan
 
   variables {
-    enable_cdn           = true
+    enable_cloud_cdn     = true
     cdn_ssl_certificates = ["projects/test-project/global/sslCertificates/my-cert"]
   }
 
@@ -238,7 +238,7 @@ run "cdn_no_redirect" {
   command = plan
 
   variables {
-    enable_cdn                 = true
+    enable_cloud_cdn           = true
     cdn_domains                = ["cdn.example.com"]
     cdn_redirect_http_to_https = false
   }
@@ -258,9 +258,9 @@ run "timeout_sets_env_var_and_cdn" {
   command = plan
 
   variables {
-    timeout     = 120
-    enable_cdn  = true
-    cdn_domains = ["cdn.example.com"]
+    timeout          = 120
+    enable_cloud_cdn = true
+    cdn_domains      = ["cdn.example.com"]
   }
 
   assert {
@@ -278,8 +278,8 @@ run "timeout_null_uses_cdn_default" {
   command = plan
 
   variables {
-    enable_cdn  = true
-    cdn_domains = ["cdn.example.com"]
+    enable_cloud_cdn = true
+    cdn_domains      = ["cdn.example.com"]
   }
 
   assert {
@@ -297,7 +297,7 @@ run "cdn_http_only_without_cert" {
   command = plan
 
   variables {
-    enable_cdn                 = true
+    enable_cloud_cdn           = true
     cdn_redirect_http_to_https = false
   }
 

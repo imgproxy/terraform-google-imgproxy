@@ -303,10 +303,17 @@ variable "vpc_access" {
 
 # ── Cloud CDN ─────────────────────────────────────────────────────────────────
 
+variable "enable_cloud_cdn" {
+  type        = bool
+  default     = null
+  description = "Enable Cloud CDN with global HTTPS load balancer. Creates static IP, backend, URL map, and SSL termination. Defaults to false when null."
+}
+
 variable "enable_cdn" {
   type        = bool
-  default     = false
-  description = "Enable Cloud CDN with global HTTPS load balancer. Creates static IP, backend, URL map, and SSL termination."
+  default     = null
+  deprecated  = "Use enable_cloud_cdn instead."
+  description = "Deprecated: use enable_cloud_cdn. Setting both to different values is an error."
 }
 
 variable "cdn_domains" {

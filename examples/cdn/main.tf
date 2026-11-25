@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.15"
 
   required_providers {
     google = {
@@ -34,7 +34,7 @@ module "imgproxy" {
     id = "projects/${var.project_id}/secrets/imgproxy-salts"
   }
 
-  enable_cdn = true
+  enable_cloud_cdn = true
 
   # With a domain, a managed SSL certificate is provisioned (set cdn_redirect_http_to_https = true):
   # cdn_domains = ["cdn.example.com"]

@@ -3,6 +3,10 @@ data "google_project" "project" {
 }
 
 locals {
+  # enable_cdn is a deprecated alias of enable_cloud_cdn; setting both to different values fails
+  # (see the precondition on the Cloud Run service).
+  enable_cloud_cdn = coalesce(var.enable_cloud_cdn, var.enable_cdn, false)
+
   # Upstream image repository: `repo` when set, otherwise the default selected by `pro`
   upstream_repo = var.repo != null ? var.repo : (var.pro ? "docker.imgproxy.pro/imgproxy" : "ghcr.io/imgproxy/imgproxy")
   repo_parts    = split("/", local.upstream_repo)
@@ -77,7 +81,7 @@ locals {
   # HTTPS is only set up when a certificate is provided; otherwise the CDN is HTTP-only (testing).
   cdn_https = length(var.cdn_domains) > 0 || length(var.cdn_ssl_certificates) > 0
 
-  cdn_ssl_certs = var.enable_cdn ? (
+  cdn_ssl_certs = local.enable_cloud_cdn ? (
     length(var.cdn_domains) > 0 ? [google_compute_managed_ssl_certificate.cdn[0].id] :
     [for cert in var.cdn_ssl_certificates : cert]
   ) : []
@@ -108,7 +112,7 @@ resource "google_project_service" "apis" {
     ["run.googleapis.com", "secretmanager.googleapis.com", "artifactregistry.googleapis.com"],
     var.enable_monitoring ? ["monitoring.googleapis.com", "cloudtrace.googleapis.com", "logging.googleapis.com"] : [],
     (length(var.source_buckets) > 0 || var.cache_bucket != null) ? ["storage.googleapis.com"] : [],
-    var.enable_cdn ? ["compute.googleapis.com"] : [],
+    local.enable_cloud_cdn ? ["compute.googleapis.com"] : [],
   ))
 
   project            = var.project_id
@@ -217,7 +221,7 @@ resource "google_cloud_run_v2_service" "main" {
   name     = var.service_name
 
   description         = var.description
-  ingress             = var.enable_cdn ? "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER" : var.ingress
+  ingress             = local.enable_cloud_cdn ? "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER" : var.ingress
   launch_stage        = var.launch_stage
   labels              = var.service_labels
   annotations         = var.service_annotations
@@ -393,13 +397,18 @@ resource "google_cloud_run_v2_service" "main" {
 
   lifecycle {
     precondition {
-      condition     = !var.enable_cdn || var.secret_secret == null
-      error_message = "secret_secret cannot be used with enable_cdn = true. The CDN does not forward the Authorization header."
+      condition     = !local.enable_cloud_cdn || var.secret_secret == null
+      error_message = "secret_secret cannot be used with enable_cloud_cdn = true. The CDN does not forward the Authorization header."
     }
 
     precondition {
-      condition     = !var.enable_cdn || local.cdn_https || !var.cdn_redirect_http_to_https
-      error_message = "When enable_cdn = true without cdn_domains or cdn_ssl_certificates, the CDN serves plain HTTP only: set cdn_redirect_http_to_https = false."
+      condition     = var.enable_cloud_cdn == null || var.enable_cdn == null || var.enable_cloud_cdn == var.enable_cdn
+      error_message = "enable_cdn is deprecated and conflicts with enable_cloud_cdn: remove enable_cdn and set only enable_cloud_cdn."
+    }
+
+    precondition {
+      condition     = !local.enable_cloud_cdn || local.cdn_https || !var.cdn_redirect_http_to_https
+      error_message = "When enable_cloud_cdn = true without cdn_domains or cdn_ssl_certificates, the CDN serves plain HTTP only: set cdn_redirect_http_to_https = false."
     }
 
     precondition {
@@ -408,8 +417,8 @@ resource "google_cloud_run_v2_service" "main" {
     }
 
     precondition {
-      condition     = !var.enable_cdn || var.ingress == "INGRESS_TRAFFIC_ALL" || var.ingress == "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
-      error_message = "When enable_cdn = true, ingress must be INGRESS_TRAFFIC_ALL or INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER. INGRESS_TRAFFIC_INTERNAL_ONLY blocks Cloud CDN traffic."
+      condition     = !local.enable_cloud_cdn || var.ingress == "INGRESS_TRAFFIC_ALL" || var.ingress == "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+      error_message = "When enable_cloud_cdn = true, ingress must be INGRESS_TRAFFIC_ALL or INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER. INGRESS_TRAFFIC_INTERNAL_ONLY blocks Cloud CDN traffic."
     }
 
     precondition {
@@ -523,7 +532,7 @@ moved {
 # CDN policy, URL map, target proxy, and SSL termination.
 
 resource "google_compute_global_address" "cdn" {
-  count      = var.enable_cdn ? 1 : 0
+  count      = local.enable_cloud_cdn ? 1 : 0
   project    = var.project_id
   name       = "${var.service_name}-cdn-ip"
   ip_version = "IPV4"
@@ -531,7 +540,7 @@ resource "google_compute_global_address" "cdn" {
 }
 
 resource "google_compute_region_network_endpoint_group" "cdn" {
-  count                 = var.enable_cdn ? 1 : 0
+  count                 = local.enable_cloud_cdn ? 1 : 0
   project               = var.project_id
   name                  = "${var.service_name}-neg"
   region                = var.location
@@ -545,7 +554,7 @@ resource "google_compute_region_network_endpoint_group" "cdn" {
 }
 
 resource "google_compute_backend_service" "cdn" {
-  count                 = var.enable_cdn ? 1 : 0
+  count                 = local.enable_cloud_cdn ? 1 : 0
   project               = var.project_id
   name                  = "${var.service_name}-backend"
   protocol              = "HTTPS"
@@ -583,13 +592,13 @@ resource "google_compute_backend_service" "cdn" {
 
 check "cdn_without_certificate" {
   assert {
-    condition     = !var.enable_cdn || local.cdn_https
-    error_message = "WARNING: enable_cdn = true without cdn_domains or cdn_ssl_certificates. The CDN serves plain HTTP only, so traffic (including signed URLs) is unencrypted. Use this for testing only."
+    condition     = !local.enable_cloud_cdn || local.cdn_https
+    error_message = "WARNING: enable_cloud_cdn = true without cdn_domains or cdn_ssl_certificates. The CDN serves plain HTTP only, so traffic (including signed URLs) is unencrypted. Use this for testing only."
   }
 }
 
 resource "google_compute_managed_ssl_certificate" "cdn" {
-  count   = var.enable_cdn && length(var.cdn_domains) > 0 ? 1 : 0
+  count   = local.enable_cloud_cdn && length(var.cdn_domains) > 0 ? 1 : 0
   project = var.project_id
   name    = "${var.service_name}-cert"
 
@@ -601,7 +610,7 @@ resource "google_compute_managed_ssl_certificate" "cdn" {
 }
 
 resource "google_compute_url_map" "cdn" {
-  count           = var.enable_cdn ? 1 : 0
+  count           = local.enable_cloud_cdn ? 1 : 0
   project         = var.project_id
   name            = "${var.service_name}-lb"
   default_service = google_compute_backend_service.cdn[0].id
@@ -610,7 +619,7 @@ resource "google_compute_url_map" "cdn" {
 }
 
 resource "google_compute_url_map" "cdn_http_redirect" {
-  count   = var.enable_cdn && var.cdn_redirect_http_to_https ? 1 : 0
+  count   = local.enable_cloud_cdn && var.cdn_redirect_http_to_https ? 1 : 0
   project = var.project_id
   name    = "${var.service_name}-http-redirect"
 
@@ -624,7 +633,7 @@ resource "google_compute_url_map" "cdn_http_redirect" {
 }
 
 resource "google_compute_target_http_proxy" "cdn_redirect" {
-  count   = var.enable_cdn && var.cdn_redirect_http_to_https ? 1 : 0
+  count   = local.enable_cloud_cdn && var.cdn_redirect_http_to_https ? 1 : 0
   project = var.project_id
   name    = "${var.service_name}-http-proxy"
   url_map = google_compute_url_map.cdn_http_redirect[0].id
@@ -634,7 +643,7 @@ resource "google_compute_target_http_proxy" "cdn_redirect" {
 
 # HTTP proxy for direct backend access (when redirect disabled)
 resource "google_compute_target_http_proxy" "cdn_http" {
-  count   = var.enable_cdn && !var.cdn_redirect_http_to_https ? 1 : 0
+  count   = local.enable_cloud_cdn && !var.cdn_redirect_http_to_https ? 1 : 0
   project = var.project_id
   name    = "${var.service_name}-http-proxy"
   url_map = google_compute_url_map.cdn[0].id
@@ -643,7 +652,7 @@ resource "google_compute_target_http_proxy" "cdn_http" {
 }
 
 resource "google_compute_global_forwarding_rule" "cdn_http" {
-  count                 = var.enable_cdn ? 1 : 0
+  count                 = local.enable_cloud_cdn ? 1 : 0
   project               = var.project_id
   name                  = "${var.service_name}-http-rule"
   target                = var.cdn_redirect_http_to_https ? google_compute_target_http_proxy.cdn_redirect[0].id : google_compute_target_http_proxy.cdn_http[0].id
@@ -659,7 +668,7 @@ resource "google_compute_global_forwarding_rule" "cdn_http" {
 }
 
 resource "google_compute_target_https_proxy" "cdn" {
-  count            = var.enable_cdn && local.cdn_https ? 1 : 0
+  count            = local.enable_cloud_cdn && local.cdn_https ? 1 : 0
   project          = var.project_id
   name             = "${var.service_name}-https-proxy"
   url_map          = google_compute_url_map.cdn[0].id
@@ -669,7 +678,7 @@ resource "google_compute_target_https_proxy" "cdn" {
 }
 
 resource "google_compute_global_forwarding_rule" "cdn" {
-  count                 = var.enable_cdn && local.cdn_https ? 1 : 0
+  count                 = local.enable_cloud_cdn && local.cdn_https ? 1 : 0
   project               = var.project_id
   name                  = "${var.service_name}-https-rule"
   target                = google_compute_target_https_proxy.cdn[0].id

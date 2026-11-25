@@ -67,4 +67,4 @@ gcloud secrets delete imgproxy-salts
 
 ## Next
 
-Continue with [gcs](../gcs/).
+Continue with [scaling](../scaling/).

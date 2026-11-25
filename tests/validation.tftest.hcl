@@ -106,8 +106,8 @@ run "rejects_cdn_with_secret_secret_id" {
   command = plan
 
   variables {
-    enable_cdn  = true
-    cdn_domains = ["cdn.example.com"]
+    enable_cloud_cdn = true
+    cdn_domains      = ["cdn.example.com"]
     secret_secret = {
       id      = "projects/test-project/secrets/imgproxy-secret"
       version = "latest"
@@ -117,11 +117,51 @@ run "rejects_cdn_with_secret_secret_id" {
   expect_failures = [google_cloud_run_v2_service.main]
 }
 
+run "deprecated_enable_cdn_still_enables_cloud_cdn" {
+  command = plan
+
+  variables {
+    enable_cdn  = true
+    cdn_domains = ["cdn.example.com"]
+  }
+
+  assert {
+    condition     = length(google_compute_global_address.cdn) == 1
+    error_message = "The deprecated enable_cdn must still create the CDN load balancer"
+  }
+}
+
+run "accepts_matching_enable_cdn_and_enable_cloud_cdn" {
+  command = plan
+
+  variables {
+    enable_cdn       = true
+    enable_cloud_cdn = true
+    cdn_domains      = ["cdn.example.com"]
+  }
+
+  assert {
+    condition     = length(google_compute_global_address.cdn) == 1
+    error_message = "Equal enable_cdn and enable_cloud_cdn must be accepted"
+  }
+}
+
+run "rejects_conflicting_enable_cdn_and_enable_cloud_cdn" {
+  command = plan
+
+  variables {
+    enable_cdn       = true
+    enable_cloud_cdn = false
+  }
+
+  expect_failures = [google_cloud_run_v2_service.main]
+}
+
 run "rejects_cdn_without_cert_with_https_redirect" {
   command = plan
 
   variables {
-    enable_cdn = true
+    enable_cloud_cdn = true
   }
 
   expect_failures = [google_cloud_run_v2_service.main, check.cdn_without_certificate]
@@ -131,7 +171,7 @@ run "rejects_cdn_with_both_cert_types" {
   command = plan
 
   variables {
-    enable_cdn           = true
+    enable_cloud_cdn     = true
     cdn_domains          = ["cdn.example.com"]
     cdn_ssl_certificates = ["projects/test-project/global/sslCertificates/my-cert"]
   }
@@ -143,9 +183,9 @@ run "rejects_invalid_cdn_cache_mode" {
   command = plan
 
   variables {
-    enable_cdn     = true
-    cdn_domains    = ["cdn.example.com"]
-    cdn_cache_mode = "INVALID_MODE"
+    enable_cloud_cdn = true
+    cdn_domains      = ["cdn.example.com"]
+    cdn_cache_mode   = "INVALID_MODE"
   }
 
   expect_failures = [var.cdn_cache_mode]

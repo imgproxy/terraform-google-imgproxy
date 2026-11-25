@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.15"
 
   required_providers {
     google = {
@@ -38,7 +38,7 @@ module "imgproxy" {
   }
   signature_size = 32
 
-  # Optional: Bearer token auth (cannot be used with enable_cdn = true)
+  # Optional: Bearer token auth (cannot be used with enable_cloud_cdn = true)
   # secret_secret = {
   #   id = "projects/${var.project_id}/secrets/imgproxy-secret"
   # }
@@ -100,7 +100,7 @@ module "imgproxy" {
   }
 
   # Optional: Cloud CDN (requires a domain name)
-  # enable_cdn                 = true
+  # enable_cloud_cdn                 = true
   # cdn_domains                = ["cdn.example.com"]
   # cdn_cache_mode             = "CACHE_ALL_STATIC"
   # cdn_default_ttl            = 3600

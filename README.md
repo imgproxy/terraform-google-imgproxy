@@ -32,6 +32,7 @@ Start with [insecure](examples/insecure/) and follow the "Next" link at the end 
 
 - [insecure](examples/insecure/) - Minimal deployment without request signing (development only)
 - [signed](examples/signed/) - Production setup with URL signing
+- [scaling](examples/scaling/) - Instance size and count, concurrency, CPU allocation
 - [gcs](examples/gcs/) - Private GCS bucket as the image source
 - [cdn](examples/cdn/) - Cloud CDN with a global HTTPS load balancer
 - [pro](examples/pro/) - imgproxy Pro with license key and GCS result cache
@@ -82,7 +83,7 @@ ingress               = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 allow_unauthenticated = false
 ```
 
-With `enable_cdn = true`, direct access to the Cloud Run URL is blocked automatically.
+With `enable_cloud_cdn = true`, direct access to the Cloud Run URL is blocked automatically.
 
 ### Health check and logs
 
@@ -97,7 +98,7 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 
 | Name | Version |
 | ---- | ------- |
-| terraform | >= 1.5 |
+| terraform | >= 1.15 |
 | google | ~> 6.0 |
 
 ## Providers
@@ -170,7 +171,8 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 | custom\_audiences | Custom audiences for this service, as full URLs. See https://cloud.google.com/run/docs/configuring/custom-audiences. | `list(string)` | no |
 | deletion\_protection | Enable Terraform deletion protection on the Cloud Run service. When true, `terraform destroy` requires first setting this to false and applying. | `bool` | no |
 | description | Cloud Run service description. This field currently has a 512-character limit. | `string` | no |
-| enable\_cdn | Enable Cloud CDN with global HTTPS load balancer. Creates static IP, backend, URL map, and SSL termination. | `bool` | no |
+| enable\_cdn | Deprecated: use enable\_cloud\_cdn. Setting both to different values is an error. | `bool` | no |
+| enable\_cloud\_cdn | Enable Cloud CDN with global HTTPS load balancer. Creates static IP, backend, URL map, and SSL termination. Defaults to false when null. | `bool` | no |
 | enable\_monitoring | Enable the OpenTelemetry collector sidecar to send traces, metrics, and logs to Google Cloud Trace, Cloud Monitoring, and Cloud Logging. Automatically configures imgproxy OTEL environment variables. | `bool` | no |
 | encryption\_key | Customer-managed encryption key (CMEK) reference to encrypt the container image. | `string` | no |
 | environment | Additional environment variables passed to imgproxy (e.g. IMGPROXY\_MAX\_SRC\_RESOLUTION). | `map(string)` | no |
@@ -220,7 +222,7 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 | location | The region where the Cloud Run service is deployed. Use this to create a Serverless NEG when attaching a load balancer. |
 | service\_account\_email | Email of the imgproxy service account. |
 | service\_name | The Cloud Run service name. |
-| url | The imgproxy endpoint URL. When enable\_cdn = true and cdn\_domains is set, returns the first domain as HTTPS. When only cdn\_ssl\_certificates is provided, returns the static IP as HTTPS. With enable\_cdn = true and no certificate, returns the static IP as HTTP. Otherwise returns the Cloud Run service URL. |
+| url | The imgproxy endpoint URL. When enable\_cloud\_cdn = true and cdn\_domains is set, returns the first domain as HTTPS. When only cdn\_ssl\_certificates is provided, returns the static IP as HTTPS. With enable\_cloud\_cdn = true and no certificate, returns the static IP as HTTP. Otherwise returns the Cloud Run service URL. |
 <!-- END_TF_DOCS -->
 
 ## License

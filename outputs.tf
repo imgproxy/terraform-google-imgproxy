@@ -1,6 +1,6 @@
 output "url" {
-  description = "The imgproxy endpoint URL. When enable_cdn = true and cdn_domains is set, returns the first domain as HTTPS. When only cdn_ssl_certificates is provided, returns the static IP as HTTPS. With enable_cdn = true and no certificate, returns the static IP as HTTP. Otherwise returns the Cloud Run service URL."
-  value = var.enable_cdn ? (
+  description = "The imgproxy endpoint URL. When enable_cloud_cdn = true and cdn_domains is set, returns the first domain as HTTPS. When only cdn_ssl_certificates is provided, returns the static IP as HTTPS. With enable_cloud_cdn = true and no certificate, returns the static IP as HTTP. Otherwise returns the Cloud Run service URL."
+  value = local.enable_cloud_cdn ? (
     length(var.cdn_domains) > 0
     ? "https://${var.cdn_domains[0]}"
     : "${local.cdn_https ? "https" : "http"}://${google_compute_global_address.cdn[0].address}"
@@ -24,10 +24,10 @@ output "location" {
 
 output "cdn_ip_address" {
   description = "Static IP address of the CDN load balancer. Point your DNS A record to this IP."
-  value       = var.enable_cdn ? google_compute_global_address.cdn[0].address : null
+  value       = local.enable_cloud_cdn ? google_compute_global_address.cdn[0].address : null
 }
 
 output "cdn_managed_certificate_id" {
   description = "ID of the managed SSL certificate. Check status in Cloud Console under Load Balancing > Certificates."
-  value       = var.enable_cdn && length(var.cdn_domains) > 0 ? google_compute_managed_ssl_certificate.cdn[0].id : null
+  value       = local.enable_cloud_cdn && length(var.cdn_domains) > 0 ? google_compute_managed_ssl_certificate.cdn[0].id : null
 }

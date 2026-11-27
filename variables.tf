@@ -184,7 +184,7 @@ variable "source_buckets" {
 variable "cache_bucket" {
   type        = string
   default     = null
-  description = "Existing GCS bucket name for imgproxy result cache (imgproxy Pro only). The Cloud Run SA will be granted roles/storage.objectAdmin. Configure cache env vars via var.environment (https://docs.imgproxy.net/configuration/options#IMGPROXY_CACHE_BUCKET)."
+  description = "Existing GCS bucket name for imgproxy result cache (imgproxy Pro only). The Cloud Run SA will be granted roles/storage.objectAdmin. Also sets IMGPROXY_CACHE_USE = \"gcs\" and IMGPROXY_CACHE_BUCKET (https://docs.imgproxy.net/configuration/options#IMGPROXY_CACHE_BUCKET); entries in var.environment override them."
 }
 
 # ── Scaling ───────────────────────────────────────────────────────────────────

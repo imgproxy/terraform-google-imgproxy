@@ -149,6 +149,28 @@ run "cache_bucket_grants_admin" {
   }
 }
 
+run "cache_bucket_sets_cache_env" {
+  command = plan
+
+  variables {
+    cache_bucket = "my-imgproxy-cache"
+  }
+
+  assert {
+    condition     = local.env_vars["IMGPROXY_CACHE_USE"] == "gcs" && local.env_vars["IMGPROXY_CACHE_BUCKET"] == "my-imgproxy-cache"
+    error_message = "cache_bucket must set IMGPROXY_CACHE_USE and IMGPROXY_CACHE_BUCKET"
+  }
+}
+
+run "no_cache_env_without_cache_bucket" {
+  command = plan
+
+  assert {
+    condition     = !contains(keys(local.env_vars), "IMGPROXY_CACHE_USE")
+    error_message = "Cache env vars must not be set without cache_bucket"
+  }
+}
+
 run "monitoring_creates_collector_config_and_iam" {
   command = plan
 

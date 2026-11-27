@@ -74,7 +74,7 @@ With `enable_monitoring = true`, an OpenTelemetry collector sidecar receives OTL
 
 ### GCS integration
 
-The module grants IAM permissions on existing buckets and does not create them. `source_buckets` enables the `gs://` URL scheme; `cache_bucket` (Pro) is for processed results, configured via `environment`.
+The module grants IAM permissions on existing buckets and does not create them. `source_buckets` enables the `gs://` URL scheme; `cache_bucket` (Pro) is for processed results, also sets `IMGPROXY_CACHE_USE=gcs` and `IMGPROXY_CACHE_BUCKET` (entries in `environment` override them).
 
 ### Private deployment
 
@@ -155,7 +155,7 @@ The service exposes `/health` on port 8080. Logs are in Cloud Console → Cloud 
 | project\_id | GCP project ID. | `string` | yes |
 | allow\_unauthenticated | Whether to allow unauthenticated (public) requests. | `bool` | no |
 | binary\_authorization | Binary Authorization settings. use\_default enables the project's default policy. | ```object({ breakglass_justification = optional(string) use_default = optional(bool) })``` | no |
-| cache\_bucket | Existing GCS bucket name for imgproxy result cache (imgproxy Pro only). The Cloud Run SA will be granted roles/storage.objectAdmin. Configure cache env vars via var.environment (https://docs.imgproxy.net/configuration/options#IMGPROXY_CACHE_BUCKET). | `string` | no |
+| cache\_bucket | Existing GCS bucket name for imgproxy result cache (imgproxy Pro only). The Cloud Run SA will be granted roles/storage.objectAdmin. Also sets IMGPROXY\_CACHE\_USE = "gcs" and IMGPROXY\_CACHE\_BUCKET (https://docs.imgproxy.net/configuration/options#IMGPROXY_CACHE_BUCKET); entries in var.environment override them. | `string` | no |
 | cdn\_cache\_mode | CDN cache mode. Options: CACHE\_ALL\_STATIC, USE\_ORIGIN\_HEADERS, FORCE\_CACHE\_ALL. | `string` | no |
 | cdn\_client\_ttl | Client (browser) TTL in seconds. Overrides origin Cache-Control for client caching. | `number` | no |
 | cdn\_default\_ttl | Default TTL in seconds for cached content when origin doesn't specify Cache-Control. | `number` | no |

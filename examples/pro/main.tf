@@ -45,11 +45,6 @@ module "imgproxy" {
 
   # Existing bucket (see README) for the processed-result cache (Pro)
   cache_bucket = "${var.project_id}-imgproxy-cache"
-
-  environment = {
-    IMGPROXY_CACHE_USE    = "gcs"
-    IMGPROXY_CACHE_BUCKET = "${var.project_id}-imgproxy-cache"
-  }
 }
 
 output "url" {

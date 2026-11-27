@@ -45,6 +45,8 @@ module "imgproxy_common" {
   # Provider-specific
   secret_key_name   = "secret"
   storage_env_key   = "IMGPROXY_USE_GCS"
+  cache_use         = "gcs"
+  cache_bucket      = var.cache_bucket
   storage_enabled   = length(var.source_buckets) > 0
   enable_monitoring = var.enable_monitoring
   otel_service_name = var.service_name
